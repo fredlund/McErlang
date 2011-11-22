@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 confirm() {
 	while true
@@ -36,7 +36,7 @@ then
 	exit 0
 fi
 
-TRGDIR="$TRG/mcerlang-$VER"
+TRGDIR="$TRG/McErlang_version_$VER"
 echo "Will assemble release in $TRGDIR"
 
 if [ -d $TRGDIR ]
@@ -50,32 +50,73 @@ mkdir $TRGDIR
 if [ ! -d $TRGDIR ]
 then 
 	echo "Could not create $TRGDIR, aborting!"
+	exit 1
 fi
 
-mkdir $TRGDIR/ebin
-mkdir $TRGDIR/src
-mkdir $TRGDIR/doc
-mkdir $TRGDIR/private
-mkdir $TRGDIR/include
-mkdir $TRGDIR/examples
+pushd $SRC
+ABSSRCDIR=`pwd`
+popd
 
-for EBIN in `find $SRC -name "ebin" -print | grep -v examples | grep -v release`
-do
-#	echo $EBIN
-	cp -f $EBIN/*.beam $TRGDIR/ebin 
-done
+pushd $TRGDIR
+ABSTRGDIR=`pwd`
+TRGDIR2=mcerlang-$VER
+mkdir $TRGDIR2
+pushd $TRGDIR2
+ABSTRGDIR2=`pwd`
 
-cp $SRC/src/include/*.hrl $TRGDIR/include 
-cp $SRC/configuration/funinfo.txt $TRGDIR/include 
+mkdir ebin
+mkdir src
+mkdir doc
+mkdir private
+mkdir include
+mkdir examples
 
-mkdir -p $TRGDIR/include/erlang/src/include
-cp $SRC/languages/erlang/src/include/*.hrl $TRGDIR/include/erlang/src/include
+cp ${ABSSRCDIR}/Ltl2Buchi/ebin/*.beam ebin
+cp ${ABSSRCDIR}/Ltl2Buchi_glue/ebin/*.beam ebin
+cp ${ABSSRCDIR}/app/ebin/*.beam ebin
+cp ${ABSSRCDIR}/behaviours/ebin/*.beam ebin
+cp ${ABSSRCDIR}/algorithms/ebin/*.beam ebin
+cp ${ABSSRCDIR}/abstractions/ebin/*.beam ebin
+cp ${ABSSRCDIR}/schedulers/ebin/*.beam ebin
+cp ${ABSSRCDIR}/monitors/ebin/*.beam ebin
+cp ${ABSSRCDIR}/tables/ebin/*.beam ebin
+cp ${ABSSRCDIR}/stacks/ebin/*.beam ebin
+cp ${ABSSRCDIR}/languages/erlang/ebin/*.beam ebin
+cp ${ABSSRCDIR}/ebin/*.beam ebin
 
-mkdir -p $TRGDIR/src/lib/erlang
-cp -r $SRC/lib/erlang/src $TRGDIR/src/lib/erlang
+cp $ABSSRCDIR/src/include/*.hrl include 
+cp $ABSSRCDIR/configuration/funinfo.txt include 
 
-cp $SRC/app/ebin/mcerlang.app $TRGDIR/ebin 
+mkdir -p include/erlang/
+cp $ABSSRCDIR/languages/erlang/src/include/*.hrl include/erlang/
 
-cp -r $SRC/examples/Simple_messenger $TRGDIR/examples
+mkdir -p src/lib/erlang
+pushd $ABSSRCDIR/lib/erlang
+find . | grep -v '/\.svn' | cpio -dump $ABSTRGDIR2/src/lib/erlang
+popd
+
+cp $ABSSRCDIR/app/ebin/mcerlang.app ebin 
+
+mkdir -p examples/Simple_messenger
+pushd $ABSSRCDIR/examples/Simple_messenger
+find . | grep -v '/\.svn' | cpio -dump $ABSTRGDIR2/examples/Simple_messenger
+popd
+
+cp $ABSSRCDIR/doc/eqc_mcerlang_tutorial.pdf doc
+cp $ABSSRCDIR/doc/tutorial/tutorial.pdf doc
+cp $ABSSRCDIR/doc/userManual/userManual.pdf doc
+
+mkdir -p doc/edoc
+pushd $ABSSRCDIR/doc/edoc
+find . | grep -v '/\.svn' | cpio -dump $ABSTRGDIR2/doc/edoc
+popd
+
+popd
+cp $ABSSRCDIR/bininst/README .
+cp $ABSSRCDIR/bininst/LICENCING .
+cp $ABSSRCDIR/bininst/NEWS .
+cp $ABSSRCDIR/bininst/INSTALLATION .
+cp $ABSSRCDIR/bininst/mcerl_compiler .
+cp $ABSSRCDIR/bininst/mcerlang_install.beam .
 
 echo "Done!"
