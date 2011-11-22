@@ -1,0 +1,15 @@
+{application,mcerlang,
+		[{description, "ProTest wrapper for McErlang"},
+		 {vsn,"1.0"},
+		 {modules,[mce_app, mce_app_supv, mce_server,
+		           mce]},
+		 {registered,[mcerlang]},
+		 {applications,[kernel,stdlib]},
+		 {env,[{check_deadlock,false},
+			   {chatter,none},
+			   {small_pids,false},
+			   {shortest,false},
+			   {random,false},
+			   {table_bound,256}]},
+		 {mod,{mce_app,[]}}
+		]}.
