@@ -1,10 +1,8 @@
 For the development of McErlang source code, documentation and
-examples we are using the Subversion revision control system. This
-means that there is a central repository where the code is located. To
-get your own local copy of the repository type the following command
-in a terminal window:
+examples we are using GitHub. To get your own local copy of the 
+repository type the following command in a terminal window:
 
-$ svn checkout https://babel.ls.fi.upm.es/svn/McErlang/trunk McErlang
+$ git clone git://github.com/fredlund/McErlang.git
 
 This command will create a local copy of all the McErlang code and
 examples. To compile McErlang it normally suffices to execute ``make''

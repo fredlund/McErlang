@@ -1,0 +1,67 @@
+MCE_VERSION = @PACKAGE_VERSION@
+
+ERLANG_INSTALL_LIB_DIR = @ERLANG_INSTALL_LIB_DIR@
+ERLANG_INSTALL_LIB_DIR_mcerlang = @ERLANG_INSTALL_LIB_DIR_mcerlang@
+
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+prefix = @prefix@
+
+MAKE = make
+EMAKE = erl -pa ../../behaviours/ebin -make
+
+all: tool examples
+
+tool:
+	cd bininst; $(EMAKE)
+	cd behaviours/ebin; $(EMAKE)
+	cd ebin; $(EMAKE)
+	cd monitors/ebin; $(EMAKE)
+	cd abstractions/ebin; $(EMAKE)
+	cd algorithms/ebin; $(EMAKE)
+	cd utility/ebin; $(EMAKE)
+	cd tables/ebin; $(EMAKE)
+	cd stacks/ebin; $(EMAKE)
+	cd schedulers/ebin; $(EMAKE)
+	cd app; $(MAKE)
+	cd languages; $(MAKE)
+	cd Ltl2Buchi_glue; $(MAKE)
+	cd Ltl2Buchi; $(MAKE)
+	(cd src/include; ln -sf ../../languages/erlang/src/include erlang)
+	scripts/mkversion $(MCE_VERSION)
+
+examples:
+	cd examples; $(MAKE)	
+
+docs:
+	cd doc/tutorial; make
+	cd doc/userManual; make
+	scripts/gen_edoc.sh
+
+release: tool docs
+	@ scripts/mkrelease "." release $(MCE_VERSION)
+
+release_nobuild:
+	@ scripts/mkrelease "." release $(MCE_VERSION)
+
+install: release
+	echo "Installing mcerlang-$(MCE_VERSION) into $(ERLANG_INSTALL_LIB_DIR)"
+	cp -r release/mcerlang-$(MCE_VERSION) $(ERLANG_INSTALL_LIB_DIR)
+
+publish:
+	make release
+	(cd release; zip -r mcerlang-$(MCE_VERSION).zip "McErlang_version_$(MCE_VERSION)")
+
+clean:
+	cd behaviours/ebin; rm -f *beam
+	cd ebin; rm -f *.beam
+	cd monitors/ebin; rm -f *.beam
+	cd abstractions/ebin; rm -f *.beam
+	cd algorithms/ebin; rm -f *.beam
+	cd tables/ebin; rm -f *.beam
+	cd utility/ebin; rm -f *.beam
+	cd schedulers/ebin; rm -f *.beam
+	cd stacks/ebin; rm -f *.beam
+	cd languages; $(MAKE) clean
+	cd Ltl2Buchi_glue; make clean
+	cd Ltl2Buchi; make clean
