@@ -1,0 +1,41 @@
+01/06 -- 2011:
+	By default the McErlang compiler now compiles code to support "sends
+as side effects". However, this is disabled at runtime. To enable it at runtime
+give the option sends_are_sefs=true to McErlang.
+
+22/06 -- 2011: 
+      New verification algorithm (mce_alg_safety_rnd) which may give better results (quicker counterexamples)
+      for some verifications.
+      Easier installation as an Erlang library (and thus for WINDOWS), through use of an installation
+      script (see README, and bininst/INSTALLATION).
+
+20/10 -- 2010: QUICKCHECK integration, WINDOWS support, Erlang Application 
+
+      The integration between QuickCheck and McErlang is now better documented
+      in a tutorial (doc/eqc_mcerlang_tutorial.pdf); take a look!
+
+      We have tried to make it easier to execute McErlang under Windows, 
+      and to have McErlang behave as a proper Erlang application.
+
+      To accomplish this the installation procedure has changed 
+      in a tiny detail (it is necessary to first run the configure command
+      to generate the Makefile that later compiles McErlang).
+      See the file INSTALLATION for detailed instructions.
+
+23/11 -- 2010:
+      - Now permits HiPE Core Erlang files (".core") as input.
+      Due to limitations in the Erlang compiler it is not likely that
+      all Core Erlang files will be suitable as input.
+
+      - Atoms are permitted as arguments to the functions
+      mce_erl_compile:file/1 and mce_erl_compile:file/2 (compare compile:file).
+
+      - Implementations can now be specified without options, if they
+      are not needed. Example, instead of
+      	  algorithm={mce_alg_safety,whatever}
+      one can specify
+      	  algorithm=mce_alg_safety
+
+      
+
+      

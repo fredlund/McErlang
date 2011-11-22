@@ -1,0 +1,81 @@
+#!/bin/sh
+
+confirm() {
+	while true
+	do
+		read CONFIRM
+		case $CONFIRM in
+			y|Y|YES|yes|Yes) break ;;
+			n|N|no|NO|No)
+				echo Aborting
+				exit
+				;;
+			*) echo Please enter only y or n
+		esac
+	done
+}
+
+if [ $# -ne 3 ]
+then
+	echo "Usage: $0 <compiled-McErlang-dir> <target-dir> <version>"
+	exit 0
+fi
+
+# Source distribution
+SRC=$1
+
+# Target
+TRG=$2
+
+# Version
+VER=$3
+
+if [ ! -d $SRC ]
+then
+	echo "$SRC does not exist, aborting!"
+	exit 0
+fi
+
+TRGDIR="$TRG/mcerlang-$VER"
+echo "Will assemble release in $TRGDIR"
+
+if [ -d $TRGDIR ]
+then 
+	echo -n "Warning: $TRGDIR already exists, overwrite [y/N]? "
+	confirm
+	rm -rf $TRGDIR
+fi
+
+mkdir $TRGDIR
+if [ ! -d $TRGDIR ]
+then 
+	echo "Could not create $TRGDIR, aborting!"
+fi
+
+mkdir $TRGDIR/ebin
+mkdir $TRGDIR/src
+mkdir $TRGDIR/doc
+mkdir $TRGDIR/private
+mkdir $TRGDIR/include
+mkdir $TRGDIR/examples
+
+for EBIN in `find $SRC -name "ebin" -print | grep -v examples | grep -v release`
+do
+#	echo $EBIN
+	cp -f $EBIN/*.beam $TRGDIR/ebin 
+done
+
+cp $SRC/src/include/*.hrl $TRGDIR/include 
+cp $SRC/configuration/funinfo.txt $TRGDIR/include 
+
+mkdir -p $TRGDIR/include/erlang/src/include
+cp $SRC/languages/erlang/src/include/*.hrl $TRGDIR/include/erlang/src/include
+
+mkdir -p $TRGDIR/src/lib/erlang
+cp -r $SRC/lib/erlang/src $TRGDIR/src/lib/erlang
+
+cp $SRC/app/ebin/mcerlang.app $TRGDIR/ebin 
+
+cp -r $SRC/examples/Simple_messenger $TRGDIR/examples
+
+echo "Done!"

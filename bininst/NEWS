@@ -1,0 +1,30 @@
+20/10 -- 2010: QUICKCHECK integration, WINDOWS support, Erlang Application 
+
+      The integration between QuickCheck and McErlang is now better documented
+      in a tutorial (doc/eqc_mcerlang_tutorial.pdf); take a look!
+
+      We have tried to make it easier to execute McErlang under Windows, 
+      and to have McErlang behave as a proper Erlang application.
+
+      To accomplish this the installation procedure has changed 
+      in a tiny detail (it is necessary to first run the configure command
+      to generate the Makefile that later compiles McErlang).
+      See the file INSTALLATION for detailed instructions.
+
+23/11 -- 2010:
+      - Now permits HiPE Core Erlang files (".core") as input.
+      Due to limitations in the Erlang compiler it is not likely that
+      all Core Erlang files will be suitable as input.
+
+      - Atoms are permitted as arguments to the functions
+      mce_erl_compile:file/1 and mce_erl_compile:file/2 (compare compile:file).
+
+      - Implementations can now be specified without options, if they
+      are not needed. Example, instead of
+      	  algorithm={mce_alg_safety,whatever}
+      one can specify
+      	  algorithm=mce_alg_safety
+
+      
+
+      

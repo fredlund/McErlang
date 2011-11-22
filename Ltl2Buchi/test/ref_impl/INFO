@@ -1,0 +1,11 @@
+To keep the size of the repository small, and to avoid all licensing issues, the
+reference implementations Wring and LTL2Buchi are not included in the repository!
+
+You can get them from:
+- ftp://vlsi.colorado.edu/pub/Wring-1.1.0.tar.gz
+- http://javapathfinder.sourceforge.net/ (LTL2Buchi is part of the JavaPathfinder)
+
+Put Wring in a directory called 'Wring' and the ltl2buchi.jar in a directory called 
+LTL2Buchi to use them with the wrappers in this directory!
+
+/Hans

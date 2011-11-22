@@ -1,0 +1,39 @@
+LTL-to-Büchi translator 
+
+The main component of this package is an Erlang implementation of an
+LTL-to-Büchi translator. In addition there is also a reference
+implementation of a parser, some modules that handles LTL expressions
+and some modules that handles Büchi automata.
+
+Licensing 
+
+The licensing is described in LICENSE, but in short the package is
+licensed under the standard three-clause BSD license.
+
+Compiling
+
+Simply type 'make' to compile the package. If you also want to build
+the documentation issue 'make doc'. 
+
+Installation
+
+To permanently install, check the Makefile and ensure that your your
+erlang/lib directory (the standard place for it is
+/usr/lib/erlang/lib) is defined correctly in the ERL_LIB
+variable. Then a 'sudo make install' should do the trick. NOTE: The
+tests and the reference implementations for the tests are *not*
+installed.
+
+Documentation
+
+The usage and the technical details are described in the (EDOC)
+documentation, build the documentation using 'make doc', and it is
+located in the 'doc' directory.
+
+Tests
+
+The repository includes a 'test' direcotory containing QuickCheck
+properties and reference implementations, see test/README for details
+of running the tests. The tests and the reference implementations are
+built by 'make tests'.
+

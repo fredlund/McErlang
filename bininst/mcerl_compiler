@@ -1,0 +1,3 @@
+#!/bin/bash
+
+erl -noshell -s mce_erl_compile start $@ 

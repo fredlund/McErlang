@@ -1,0 +1,3 @@
+{'./ltl2buchi_eqc',[debug_info,{outdir,'../ebin'}]}.
+{'./ref_impl/*',[debug_info,{outdir,'../ebin'}]}.
+

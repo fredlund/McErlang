@@ -1,0 +1,61 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]
+then
+    echo "Usage: ${CMD} versionnumber (mcerlang-2.0.1)"
+    exit 1
+fi
+
+# A stupid shell script for generating a binary distribution of McErlang
+
+TMPD=McErlang.$$
+TMPDIR=/tmp/${TMPD}
+DISTD=McErlangDist.$$
+TMPDIST=/tmp/${DISTD}
+
+cd /tmp
+#svn checkout https://babel.ls.fi.upm.es/svn/McErlang/trunk ${TMPD}
+svn checkout https://babel.ls.fi.upm.es/svn/McErlang/branches/unstable ${TMPD}
+cd ${TMPD}
+./configure
+make
+cd examples
+make
+cd ..
+make docs
+cd ..
+mkdir $DISTD
+cd $DISTD
+mkdir ebin
+mkdir include
+mkdir priv
+mkdir examples
+mkdir doc
+cp ${TMPDIR}/README.bin README
+cp ${TMPDIR}/LICENCE.bin LICENCE
+cp ${TMPDIR}/NEWS NEWS
+cp ${TMPDIR}/ebin/*.beam ebin
+cp ${TMPDIR}/Ltl2Buchi/ebin/*.beam ebin
+cp ${TMPDIR}/Ltl2Buchi_glue/ebin/*.beam ebin
+cp ${TMPDIR}/app/ebin/*.beam ebin
+cp ${TMPDIR}/behaviours/ebin/*.beam ebin
+cp ${TMPDIR}/algorithms/ebin/*.beam ebin
+cp ${TMPDIR}/abstractions/ebin/*.beam ebin
+cp ${TMPDIR}/schedulers/ebin/*.beam ebin
+cp ${TMPDIR}/monitors/ebin/*.beam ebin
+cp ${TMPDIR}/tables/ebin/*.beam ebin
+cp ${TMPDIR}/stacks/ebin/*.beam ebin
+cp ${TMPDIR}/language/erlang/ebin/*.beam ebin
+cp ${TMPDIR}/src/include/*hrl include
+cp ${TMPDIR}/language/erlang/src/include/*hrl include
+cp ${TMPDIR}/doc/eqc_mcerlang_tutorial.pdf doc
+cp ${TMPDIR}/doc/tutorial/tutorial.pdf doc
+cp ${TMPDIR}/doc/userManual/userManual.pdf doc
+cp -r ${TMPDIR}/doc/edoc doc
+
+cd ..
+zip -r mcerlang.zip ${DISTD}
+
+
+
+

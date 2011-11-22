@@ -1,0 +1,54 @@
+For the development of McErlang source code, documentation and
+examples we are using the Subversion revision control system. This
+means that there is a central repository where the code is located. To
+get your own local copy of the repository type the following command
+in a terminal window:
+
+$ svn checkout https://babel.ls.fi.upm.es/svn/McErlang/trunk McErlang
+
+This command will create a local copy of all the McErlang code and
+examples. To compile McErlang it normally suffices to execute ``make''
+in the main McErlang directory.  In the following we assume that
+McErlang is installed in the directory "~/McErlang", and that you are 
+using a UNIX based system:
+
+$ cd ~/McErlang; ./configure; make
+
+The following examples assume that you have put the directory
+"McErlang/scripts" in the ``command path'' of your shell.  Consult the
+manual for your command shell if you are not sure how to do this.  As
+an example, if you are running a bash shell, the following piece of
+text can be added to the file ".profile":
+
+# set PATH so it includes the directory with McErlang scripts
+if [ -d ~/McErlang/scripts ] ; then
+    PATH=~/McErlang/scripts:"${PATH}"
+fi
+
+===============================================
+
+Alternative Installation:
+
+===============================================
+
+As an alternative to including the path to the McErlang scripts in the PATH variable
+one can install McErlang as a normal Erlang library. This method will likely work much
+better for Windows installations of McErlang as well. In addition we make pre-compiled
+McErlang distributions available (for e.g. Windows) in the web page 
+https://babel.ls.fi.upm.es/trac/McErlang/wiki/downloading.
+
+Steps:
+
+1. Compile McErlang as above, and then
+   make release
+
+2. Install McErlang as a library:
+   cd release/McErlang_version*; erl
+   1> mcerlang_install:install().
+
+For the last step to work, it may be necessary to start Erlang (erl) with super-user rights (under Unix)
+or administrator rights (Windows).
+
+More information regarding how to install McErlang as a library, including from a pre-compiled McErlang distribution,
+can be found in the file bininst/INSTALLATION.
+

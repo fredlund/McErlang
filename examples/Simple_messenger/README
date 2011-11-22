@@ -1,0 +1,9 @@
+To illustrate the use of McErlang we consider the messenger example
+from the “Getting started with Erlang” document in the Erlang/OTP
+R12B documentation. Check http://erlang.org/doc/getting
+started/part_frame.html. The messenger is a program which allows users
+to log in on different nodes and send simple messages to each
+other. The messenger allows ”clients” to connect to a central
+server, specifying their identities and locations. Thus a user won’t
+need to know the name of the Erlang node where a user is located to
+send a message to that user, only his identity.

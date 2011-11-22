@@ -1,0 +1,2096 @@
+\documentclass[a4paper]{article} 
+%%\documentclass{llncs} 
+
+\usepackage{a4wide}
+\usepackage{times}
+\usepackage{xspace}
+\usepackage{epsfig}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{hyperref}
+
+\newcommand{\erlang}{Erlang\xspace}
+\newcommand{\erlangOTP}{Erlang/OTP\xspace}
+\newcommand{\mcerlang}{McErlang\xspace}
+
+\lstdefinelanguage{Erlang}%
+  {morekeywords={abs,after,and,apply,atom,atom_to_list,band,binary,%
+      fun,binary_to_list,binary_to_term,bor,bsl,bsr,bxor,case,catch,%
+      date,div,element,erase,end,exit,export,float,float_to_list,%
+      get,halt,hash,hd,if,info,import,integer,integer_to_list,%
+      length,link,list,list_to_atom,list_to_float,list_to_integer,%
+      list_to_tuple,module,node,nodes,now,of,or,pid,port,ports,%
+      put,receive,reference,register,registered,rem,%
+      round,self,setelement,size,spawn,throw,tl,trace,trunc,%
+      spawn_link,process_flag,
+      tuple,tuple_to_list,unlink,unregister,whereis,try,%
+      infinity,undefined,when},%
+   otherkeywords={->,!,[,],\{,\}},%
+   morecomment=[l]\%,%
+   morestring=[b]",%
+   morestring=[b]'%
+  }
+
+%%\lstset{language=Erlang}
+%%\lstset{basicstyle=\small}
+%%\lstset{keywordstyle=\small\bfseries}
+%%\lstset{keywordstyle=\bfseries}
+\lstset{basicstyle=\ttfamily}
+
+%% algorithms
+\newcommand{\algsimulation}{mce\_alg\_simulation\xspace}
+\newcommand{\algsafetyclassic}{mce\_alg\_safety\_classic\xspace}
+
+%% scripts
+\newcommand{\dorunexp}{dorun\_exp\xspace}
+
+%% properties
+\newcommand{\logon}{monSendLogon\xspace}
+
+%% monitors
+\newcommand{\statechange}{stateChange\xspace}
+
+%% examples
+\newcommand{\simplemessengerdir}{repository/McErlang/examples/Simple\_messenger\xspace}
+\newcommand{\testl}{testl.erl\xspace}
+
+\begin{document}
+\title{McErlang User Manual
+\thanks{This work has been partially supported by the FP7-ICT-2007-1 
+Objective 1.2. IST number 215868.}}
+
+\author{
+Lars-{\AA}ke Fredlund and 
+Clara Benac Earle\\
+Babel group, LSIIS, Facultad de Inform\'atica, \\
+Universidad Polit\'ecnica de Madrid, Spain\\
+{\small\texttt{email: \{lfredlund,cbenac\}@fi.upm.es}}}
+
+\date{}
+
+\maketitle 
+
+\tableofcontents
+
+\section{Introduction}
+
+To get started with using the McErlang model checker we recommend
+reading the McErlang tutorial first; it can be found both on the
+McErlang web page and in the source code distribution.
+For up-to-date information regarding McErlang consult the
+\texttt{https://babel.ls.fi.upm.es/trac/McErlang} web page.
+
+In the following we make a number of simplifying assumptions.
+First, that you will be running McErlang under the Linux operating
+system; we have been using Ubuntu to develop and test 
+the tool. The tool may work under other operating systems
+as well, but we have not tried it out. 
+Moreover we assume that there is an Erlang
+version installed on your computer. The model checker
+was developed under Erlang/OTP R13B; it will probably work
+under other releases of Erlang/OTP but we haven't
+verified this. The examples assume that you have installed
+McErlang so that the directory \texttt{\$MCERLANG/scripts}
+is on your ``command path'', and similarly that the command
+\texttt{erl} for starting Erlang can be run 
+without specifying a directory path.
+
+\subsection{Getting to know Erlang}
+
+Erlang is a functional programming language developed at Ericsson for the
+implementation of concurrent, distributed, fault-tolerant 
+systems. A system is typically composed of a number of lightweight
+processes, which may be distributed over physically separated
+nodes, communicating through asynchronous message passing. 
+On top of the basic language, the OTP library implements
+commonly used components such as
+client-server architectures, finite state machines, etc.
+Providing a model checker for Erlang is especially rewarding
+since the language is by now being seen as a very capable platform for
+developing industrial strength distributed applications with excellent
+fault tolerance characteristics.
+In contrast to most other Erlang verification
+attempts, we provide support for virtually the full, rather complex,
+programming language. 
+The model checker has full Erlang data type support, support
+for general process communication, node semantics (inter-process
+communication behave subtly different from intra-process communication), fault
+detection and fault tolerance, and crucially can verify
+programs written using the high-level
+OTP Erlang component library (used by most Erlang programs).
+
+For non-Erlang programmers the approach has merits too.
+Erlang is a good {\em general specification} language, due to
+its root in functional programming (with higher-order functions
+for writing concise specifications, with software components
+for lifting the specification abstraction level, 
+can treat program as data -- yielding
+a convenient meta level, \ldots).
+
+Moreover Erlang is a good platform for {\em specifying 
+distributed algorithms} since language
+features matches common assumptions in distributed algorithms:
+(a) {\em isolated} processes that communicate using message-passing,
+(b) {\em fault-detection} is achieved using unreliable failure detectors,
+(c) process {\em fairness} built into the language,
+and (d) {\em locality} is important: communication guarantees 
+are stronger for intra--node communication than inter--node communication.
+
+The user manual assumes a basic knowledge of Erlang. Information
+on the programming language and its application programming interface 
+can be found on the site www.erlang.org
+(where Erlang can be downloaded as well) and in a number of
+concerning Erlang programming which are available or will appear in
+print shortly:
+
+\begin{itemize}
+\item
+{\em Concurrent Programming in Erlang (2nd edition)}
+by Joe Armstrong, Robert Virding, Claes Wikstr{\"om}
+and Mike Williams.
+Prentice-Hall, 1996.
+\item
+{\em Programming Erlang: Software for a Concurrent World }
+by Joe Armstrong. Pragmatic Bookshelf, 2007.
+\item
+{\em Erlang Programming}
+by Francesco Cesarini and Simon Thompson.
+O'Reilly Media, Inc., 2009.
+%%\item
+%%{\em Concurrent Programming with Erlang/OTP}
+%%by Martin Logan, Eric Merritt, Richard Carlsson 
+%%and Robert Calco.
+%%Manning Publicacions Co
+%%(estimated publishing date
+%%in September 2009).
+\end{itemize}
+
+
+\subsection{The McErlang Workflow}
+
+Figure~\ref{fig:workflow} illustrates the differences between
+a normal Erlang workflow (left) and one using the McErlang model 
+checker (right). The model is the Erlang program to be analyzed, which undergoes
+a source-to-source translation to prepare the program for running under
+the model checker. Then the normal Erlang compiler translates
+the program to either Beam byte code (an Erlang byte code language)
+or directly to native machine code. Finally the program
+is run under the McErlang run time system, under the control
+of a verification algorithm, by the normal Erlang bytecode
+interpreter. The pure computation part of the code, i.e, code with no 
+side effects, including garbage collection,
+is executed by the normal Erlang run time system. However, the side effect part
+is executed under the McErlang run time system which is a complete
+rewrite in Erlang of the basic process creating, scheduling,
+communication and fault-handling machinery of Erlang (comprising a 
+significant portion of the code of the model checker). 
+
+\begin{figure}
+\centering
+\includegraphics[width=10cm]{mcerlangorg}
+\caption{Usage of McErlang}
+\label{fig:workflow}
+\end{figure}
+
+Naturally the new run time system
+offers easy checkpointing (capturing the state of all nodes and processes,
+of the message queues of all processes, and all messages in
+transit between processes), of the whole program state as a feature
+(impossible to achieve in the normal Erlang run time system due to
+the physical distribution of processes).
+
+\subsection{A Smallish Example}
+\label{sect_example}
+
+We illustrate the use of the tool with the smallish example below.
+Two processes are spawned, the first starting an ``echo'' server
+that echoes received messages, and the other process invokes the echo
+server:
+\begin{lstlisting}[language=Erlang]
+-module(example). 
+-export([start/0]).
+
+start() -> 
+  spawn(fun() -> 
+           register(echo,self()), echo() 
+        end),
+  spawn(fun() -> 
+           echo!{msg,self(),'hello world'},
+           receive
+             {echo,Msg} -> Msg
+           end
+        end).
+
+echo() ->
+  receive
+    {msg,Client,Msg} ->
+      Client!{echo,Msg},
+      echo()
+  end.
+\end{lstlisting}
+\noindent
+Let's run the example under the standard Erlang runtime system:
+\begin{lstlisting}
+> erlc example.erl
+> erl
+Erlang (BEAM) emulator version 5.6.5 [source] [smp:2] ...
+
+Eshell V5.6.5  (abort with ^G)
+1> example:start().
+<0.34.0>
+2> 
+\end{lstlisting}
+\noindent
+That worked fine. Let's try it under McErlang instead.
+To do so we first have to recompile the module
+using the McErlang compiler:
+\begin{lstlisting}
+> mcerl_compiler -sources example.erl -output_dir .
+\end{lstlisting}
+\noindent
+Then we run it:
+\begin{lstlisting}
+> mcerl
+Erlang (BEAM) emulator version 5.6.5 [source] [smp:2] ...
+
+Eshell V5.6.5  (abort with ^G)
+1> mce:apply(example,start,[]).
+Starting McErlang model checker environment version 1.0 ...
+...
+
+Process ... exited because of error: badarg
+
+
+*** User code generated error
+exception error due to reason badarg
+Stack trace:
+  mcerlang:resolvePid/2
+  mcerlang:send/2
+  ...
+ 
+Access result using mce:result()
+To see the counterexample type "mce_erl_debugger:start(mce:result()). "
+ok
+\end{lstlisting}
+\noindent
+Ah, so there was an error. Let's find out more:
+\begin{lstlisting}
+2> mce_erl_debugger:start(mce:result()).
+Starting debugger with a stack trace; execution terminated with status:
+  user program raised an uncaught exception.
+...
+
+stack(@2)> where().
+2: 
+
+1: process <node0@exodo3,3>: 
+    run #Fun<example.2.125316937>([])
+    process <node0@exodo3,3> died due to reason badarg
+
+0: process <node0@exodo3,1>: 
+    run function example:start([])
+    spawn({#Fun<example.1.27838786>,[]},[]) --> {pid,node0@exodo3,2}
+    spawn({#Fun<example.2.125316937>,[]},[]) --> {pid,node0@exodo3,3}
+    process <node0@exodo3,1> was terminated
+    process <node0@exodo3,1> died due to reason normal
+\end{lstlisting}
+\noindent
+Apparently in one execution trace the second process spawned (the one calling
+the echo server) was run before the echo server itself, and of course
+upon trying to send a message \lstinline@echo!{msg,self(),'hello world'}@
+the \lstinline@echo@ name was not registered.
+
+\subsection{Limitations}
+
+The translator handles full Erlang, however there are a number 
+of issues involving the translation of the receive construct
+of Erlang (see Section~\ref{issues} for details).
+Nevertheless a particular state space exploration algorithm 
+(see Section~\ref{algorithms}) may impose additional limitations.
+Concretely the \lstinline{mce_alg_safety} and
+\lstinline{mce_alg_buechi} model checking algorithms 
+(for checking safety and liveness properties respectively)
+currently implements neither a real-time nor a discrete-time
+semantics for Erlang. Instead, a receive statement 
+with a timeout clause
+\begin{lstlisting}[language=Erlang]
+receive
+  Pattern1 when Guard1 -> Expr1;
+  ...
+  PatternN when GuarnN -> ExprN
+  after Timeout -> Expr
+end
+\end{lstlisting}
+where \lstinline{Timeout} is not \lstinline{infinity},
+is considered to have a transition enabled whenever
+there is no element in the process mailbox that matches any
+pattern and guard. This treatment can be changed by setting
+the option (see Section~\ref{configuration}) \lstinline@is_infinitely_fast@ 
+to \lstinline@true@;
+then non-timeout transitions prohibit non-zero timeouts from occurring.
+This corresponds to the assumption that the system is infinitely
+fast compared to any timers set.
+
+The simulation algorithm (\lstinline{mce_alg_simulation})
+does implement a real-time semantics.
+
+\subsection{Extensions}
+
+The main addition to the basic Erlang language is a nondeterministic feature.
+By calling the function \lstinline{mce_erl:choice} with
+a set of function applications as arguments, McErlang will randomly select one
+of the functions as its continuation.
+\begin{lstlisting}[language=Erlang]
+mce_erl:choice(Funs::fun_spec())
+   fun_spec() = {Fun::fun(),ArgList::[term()]} 
+              | {Module::atom(),FunctionName::atom(),ArgList::[term()]}
+\end{lstlisting}
+
+The example below builds a set of continuation alternatives using
+the list comprehension construct:
+\begin{lstlisting}[language=Erlang]
+mce_erl:choice
+   ([{vodka,select_movie,[{lookup,X,[Y]}]} 
+     || X <- [casablanca,jaws,volver],Y <- [1,2]])
+\end{lstlisting}
+To execute the nondeterministic construct 
+McErlang will choose randomly one of the continuation alternatives
+whereas in model checking mode, all alternatives will of course be 
+investigated.
+
+\paragraph{Node and Global Dictionaries}
+
+In addition to the normal process dictionary McErlang also implements
+a node dictionary and a global dictionary. These new dictionaries
+implement the same application
+interface as the process dictionary, except every function
+is suffixed with "n" for the node dictionary, and with "g" for
+the global dictionary. For example, the node dictionary can be
+accessed using the functions 
+\lstinline@mcerlang:nerase/0@, 
+\lstinline@mcerlang:nerase/1@, 
+\lstinline@mcerlang:nget/0@, 
+\lstinline@mcerlang:nget/1@
+and \lstinline@mcerlang:nput/2@.
+
+These additional dictionaries are useful
+to, for instance, implement a store that
+is persistent in case of process crashes
+(the node dictionary) or both process and
+node crashes (the global dictionary).
+
+\paragraph{Node Functions}
+
+New nodes are created automatically in McErlang; there is normally
+no need to explicitly create them. 
+The \lstinline@mcerlang:spawn(Fun::fun(),NodeName::atom())@
+function, for instance, will create a (simulated) node
+with the name \lstinline@NodeName@ if it doesn't already exist.
+
+Nodes can also be explicitly started, and shutdown using
+the functions:
+\begin{lstlisting}[language=Erlang]
+mcerlang:bringNodeUp(NodeName::atom())
+mcerlang:bringNodeDown(NodeName::atom())
+\end{lstlisting}
+
+%%\subsection{Organisation of the Manual}
+%%
+%%In the next section we consider the process of compiling 
+%%Erlang code using McErlang, while in Section~\ref{running}
+%%the various options for running a program under McErlang are
+%%discussed, including how to express correctness properties
+%%in McErlang (see Section~\ref{monitors}).
+
+\section{Compiling Erlang code using McErlang}
+
+To execute Erlang code under the McErlang
+model checker a translation step is necessary,
+whereby Erlang code is translated into modified Erlang code
+suitable for running under the control of the McErlang model checker
+(which has its proper runtime system for managing processes,
+communication and nodes).
+Thereafter, a normal Erlang compilation translates the modified source
+code into beam (or native) object files.
+
+\subsection{Translation Phase}
+\label{translation}
+
+There are essentially two types of source-to-source transformations
+performed by the translation phase:
+\begin{enumerate}
+\item
+Programs running under the McErlang model checker need to invoke
+the McErlang application programming interface 
+(e.g., the module \lstinline{mcerlang}) 
+instead of the normal Erlang API (e.g., the module \lstinline{erlang}).
+Thus the transformation transforms the code so that e.g. instead
+of calling the function \lstinline{erlang:send/2} the modified
+program calls \lstinline{mcerlang:send/2}.
+\item
+Receive statements cannot be executed directly in McErlang,
+as internally in McErlang communication between (simulated)
+processes does not use message passing. In fact, McErlang normally
+runs in a single process, regardless of how many processes are
+spawned by the simulated code. During translation
+receive statements are transformed into an expression
+which returns a special value (a kind of continuation),
+signalling the intention to execute a receive statement. 
+To ensure that such special return
+values are not captured by the environment in which they reside,
+the transformation must also modify the environment.
+An example: 
+\begin{lstlisting}[language=Erlang]
+echo() ->
+  receive
+    {msg,Pid,Msg} -> ok
+  end,
+  Pid!{echo,Msg}.
+\end{lstlisting}
+If we just transform the receive statement we would loose
+its special return value:
+\begin{lstlisting}[language=Erlang,mathescape]
+echo() ->
+  $[\,[$receive
+    {msg,Pid,Msg} -> ok
+  end$]\,]$,
+  Pid!{echo,Msg}.
+\end{lstlisting}
+(where $[[$\ldots$]]$ performs the translation
+of a receive statement).
+Instead we (conceptually)
+embed the translated receive statement in a new let construct:
+\begin{lstlisting}[language=Erlang,mathescape]
+echo() ->
+  let X =
+    $[\,[$receive
+      {msg,Pid,Msg} -> ok
+    end$]\,]$
+  in Pid!{echo,Msg}.
+\end{lstlisting}
+where the semantics that the argument part of the let construct
+are executed immediately, and if that part returns a special value,
+then a special value with the body part as continuation is returned.
+If the argument part returns a normal expression, then the body
+part is executed normally.
+
+Thus to complete the transformation we need to know, 
+for every function call \lstinline{Module:Fun(Arguments)}
+in the code, whether the called function can ever execute a receive statement 
+(and if so transform it, as well as the calling context, and its
+calling context, and so on). 
+In other words, the transformation phase needs access to all source
+code modules comprising a program (including libraries),
+as it implements a global analysis identifying exactly 
+which function calls can result in a (receive) side effect.
+\end{enumerate}
+
+The transformation is implemented on the HiPE Core Erlang format.
+The standard Erlang compiler generates Core Erlang code, which
+is subjected to a number of transformations, and finally
+the standard Erlang compiler is used to generate beam (or native)
+code from the resulting transformed Core Erlang code.
+
+The mapping of function calls, and information regarding which
+functions in binary modules (for which no source code is available)
+has side effects, is defined in a configuration file.
+This configuration file is read during the compilation phase;
+the default is to use ``\texttt{\$MCERLANG/configuration/funinfo.txt}''.
+
+We will describe the semantics of the transformation configuration 
+file by explaining an excerpt:
+\begin{lstlisting}[language=Erlang]
+[
+ {gen_server,[{translated_to,mce_erl_gen_server}]},
+ {supervisor,[{translated_to,mce_erl_supervisor}]},
+ {gen_fsm,[{translated_to,mce_erl_gen_fsm}]},
+ {erlang,[{rcv,false}]},
+ {{erlang,spawn,4},[rcv,{translated_to,{mcerlang,spawn}}]},
+ {{erlang,send,2},[snd,{translated_to,{mcerlang,send}}]},
+ ...
+]
+\end{lstlisting}
+The configuration information is represented as a normal Erlang term,
+and contains a number of commands, on two basic formats:
+\begin{lstlisting}[language=Erlang]
+{module, [attribute1,...,attributeN]}
+\end{lstlisting}
+or
+\begin{lstlisting}[language=Erlang]
+{{module,functionname,arity}, [attribute1,...,attributeN]}
+\end{lstlisting}
+As an example, consider the first line in the above specification:
+\begin{lstlisting}[language=Erlang]
+{gen_server,[{translated_to,mce_erl_gen_server}]}
+\end{lstlisting}
+This command maps any call to a function in the \lstinline{gen_server} module
+to a corresponding call in the module \lstinline{mce_erl_gen_server}.
+The command \lstinline@{erlang,[{rcv,false}]}@ expresses that
+by default no function in the \lstinline@erlang@ module will ever
+execute a receive statement.
+In the next line we override this default by specifying that
+indeed \lstinline{erlang:spawn/4} (which spawns a function on a specified
+node) can actually cause a receive statement to be executed, and secondly
+that it should be mapped to calls to \lstinline{mcerlang:spawn/4} instead.
+Next the \lstinline{erlang:send/2} function is declared to cause a sending
+action (see explanation of the compiler option 
+\lstinline{-sends_are_sefs}).
+
+Depending on the particular application requirements, it may be a good
+idea to use the OTP version of a particular module, or use a (simplified)
+module that we provide. Such ``McErlang versions'' of normal OTP modules
+normally reside in ``\texttt{\$MCERLANG/lib/erlang/src}'' and its
+subdirectories.
+
+\subsection{Transformation Issues}
+\label{issues}
+
+Unfortunately the transformation is not fool-proof,
+the fundamental problem is that the transformation must potentially
+modify all the source code of an Erlang system. 
+All the code locations (not in a tail position)
+from which a receive statement may eventually
+be called must be modified. As there is no Erlang source code for parts of 
+the distribution (because they are implemented in C) we have no choice
+but to replace those parts with equivalent parts in pure Erlang.
+
+As an example, consider the translation of the following
+code fragment:
+\begin{lstlisting}[language=Erlang]
+lists:foreach(fun (Element) -> 
+                receive Command -> {Element,Command} end 
+              end L).
+\end{lstlisting}
+Apart from transforming the receive statement itself,
+the transformation must potentially also modify the anonymous function in which
+the receive statement resides. Here this is not necessary, as the
+receive statement occurs in a tail position.
+Moreover, the transformation must also modify the \lstinline{lists:foreach}
+function. Obviously we can use the source code of the \lstinline{lists} module;
+however there is a problem. Not all functions provided by the
+\lstinline{lists} module are actually implemented in Erlang. Thus we have
+no choice but to provide a slightly modified version of the module
+(\lstinline{mce_erl_lists})
+with McErlang. By default the modified library module is used, however a user
+can choose to use the standard module instead (by overriding the mapping
+from \lstinline{lists} to \lstinline{mce_erl_lists} in ``funinfo.txt'').
+This may be safe, if no function passed to any function in \lstinline{lists}
+can ever execute a return statement (the static analyser that the
+transformation phase implements is generally not intelligent enough
+to discover such possible optimisations).
+
+As we have not analysed all standard Erlang modules for such problems,
+nor have we provided alternative implementations for all cases
+needed, there is a risk that a program may exhibit different behaviour
+running under McErlang than under the normal Erlang runtime system.
+Concretely, functions may have arguments which contain unexpected
+special return values, or special return values may be silently ignored.
+
+Another concern is memory efficiency. In a model checker it is generally
+important to save memory space. Thus some data structures, although
+highly efficient in terms of execution speed, 
+can waste too much memory space (examples may include the \lstinline{dict}
+module).
+
+\subsection{Compilation}
+
+To prepare a set of Erlang source code files for use in McErlang
+(i.e., to map function calls and translate receive statements) and
+compile the resulting modules into object code the
+\texttt{mcerl\_compile} script is used\footnote{it calls
+functions in the \lstinline{mce_erl_compile} module; see the
+EDoc documentation for more details.}.
+If a particular module should not be subjected to McErlang 
+code transformations one can add the compiler directive 
+\begin{lstlisting}[language=Erlang]
+-language(erlang).
+\end{lstlisting}
+anywhere in the source code of the module.
+The Macro \lstinline{McErlang} is defined if a file is compiled
+using the McErlang compiler.
+A trivial example:
+\begin{lstlisting}[language=Erlang]
+-ifdef(McErlang).
+-define(Output(),io:format("McErlang is here!~n",[])).
+-else.
+-define(Output(),io:format("No McErlang...~n",[])).
+-endif.
+\end{lstlisting}
+Note that the \lstinline@McErlang@ macro will be defined if
+a file is compiled using McErlang, even if no transformations
+are done because the file contains a \lstinline@-language(erlang).@
+directive.
+
+The \texttt{mcerl\_compile} script accepts the following parameters:
+\begin{itemize}
+\item
+\begin{lstlisting}
+-sources file_or_directory1.erl 
+         ... 
+         file_or_directoryN.erl [options]
+\end{lstlisting}
+Specifies that the corresponding files should be compiled.
+Multiple \lstinline@-sources@ 
+specification are allowed.
+If a directory is specified, all the Erlang files in that directory
+are selected for compilation.
+Options are of two kinds, and only apply to a single 
+\lstinline@-source@
+specification: 
+\begin{itemize}
+\item
+\lstinline@-recursive@ specifies that 
+all subdirectories
+of the source specifications should be searched, recursively,
+for Erlang source files as well.
+\item
+\lstinline@-include_dirs directory1 ... directoryN@ 
+specifies that the specified directories are searched for include files
+by the preprocessor.
+\end{itemize}
+
+\item
+\begin{lstlisting}
+-libs directory1 ... directoryN
+\end{lstlisting}
+Used to add library directories containing
+alternative implementations of standard
+Erlang modules. The order in which libraries are added is relevant
+for searching for files. That is, \texttt{directory1} is searched
+before directory \texttt{directory2}.
+The directory ``\texttt{\$MCERLANG/lib/erlang/src}''
+is the default location to search for libraries.
+
+\item
+\begin{lstlisting}
+-output_dir directory
+\end{lstlisting}
+Specifies the directory where the resulting
+.beam files are written (and where for debugging purposes .core files
+containing HiPE Core Erlang code are written as well).
+The default is to store .beam files in a directory ``\texttt{ebin}'', which shall be created before compilation.
+
+\item
+\begin{lstlisting}
+-funinfo configuration_file
+\end{lstlisting}
+Used to provide an alternative transformation configuration file
+(see Section~\ref{translation} above).
+
+\item
+\begin{lstlisting}
+-verbose [true|false]
+\end{lstlisting}
+Used to provide more verbose output. If no argument
+is specified \texttt{true} is assumed. The default is \texttt{false}.
+
+\item
+\begin{lstlisting}
+-unknown_is_rcv [true|false]
+\end{lstlisting}
+Controls whether unknown functions are considered to have
+(receive) side effects, for the purpose of the static analysis
+(this is safe default option). The default is \texttt{true}.
+
+\item
+\begin{lstlisting}
+-sends_are_sefs [true|false]
+\end{lstlisting}
+An experimental option that causes actions that cause communications
+to be considered side effects as well. Functions that are normally
+declared as potentially causing communications 
+include \lstinline{erlang:link/1},
+\lstinline{erlang:monitor/2}, \lstinline{exit/2}.
+The default is \texttt{false}.
+\end{itemize}
+
+An example make file which compiles all the Erlang source files in the 
+current directory, and stores the beam files in ``\texttt{../ebin}'',
+and which refers to include files in ``\texttt{include}'', is provided
+below:
+\begin{lstlisting}{language=make}
+sources = $(wildcard *.erl)
+beams = $(patsubst %.erl,../ebin/%.beam,$(sources))
+
+$(beams): $(sources)
+	mcerl_compiler -output_dir ../ebin \
+        -sources \$(sources) \
+        -include_dirs include
+\end{lstlisting}
+
+\subsection{Customized Erlang/OTP Modules}
+
+In the distribution of McErlang we include
+tailored versions of some of the more
+commonly used Erlang/OTP libraries. The reason is twofold:
+sometimes they use features currently not translatable or implementable
+in McErlang (a case in point is \lstinline@lists@ which
+contains fragments implemented in C), or whose implementation
+may be too inefficient in terms of memory use.
+A user may choose to use these modules or the standard ones (through the
+mechanism of mapping function calls described in Section~\ref{translation}).
+
+Below we list these modules and the status of their current
+implementation (beware that changes occur frequently, consult the sources
+for exact status). These files reside in the directory
+\texttt{lib/erlang/src} unless otherwise indicated.
+
+\begin{tabular}{p{5cm}p{9cm}}
+\texttt{mce\_erl\_ets.erl} & 
+Reimplements parts of the \lstinline@erl_ets@ library. The implementation
+is timewise inefficient compared to the original library. \\
+\texttt{mce\_erl\_gen\_event.erl} &
+Reimplements the major part of the \lstinline@gen_event@ library. 
+Hot code swapping is not supported. \\
+\texttt{mce\_erl\_gen\_fsm.erl} &
+Reimplements the major part of the \lstinline@gen_fsm@ library. 
+Hot code swapping is not supported. \\
+\texttt{mce\_erl\_lists.erl} &
+An imported version of the \lstinline@lists@ library where the
+\lstinline@member@ function (and others) is still implemented in Erlang.\\
+\texttt{mce\_erl\_rpc.erl} &
+Reimplements a small portion of the \lstinline@rpc@ library.\\
+\texttt{mce\_erl\_supervisor.erl} &
+Reimplements a small portion of the \lstinline@ev_supervisor@ library,
+essentially only supporting the creation of a process tree from
+a textual description, but does not support monitoring the 
+created process tree.\\
+\texttt{mce\_erl\_gen\_server.erl} &
+Reimplements the major part of the \lstinline@gen_server@ library. 
+Hot code swapping is not supported. \\
+\texttt{mce\_erl\_gen\_server/no\_tag/} &
+Reimplements the major part of the \lstinline@gen_server@ library.\\ 
+\texttt{mce\_erl\_gen\_server.erl} &
+Hot code swapping is not supported. 
+Is timewise more efficient for checking generic server systems where
+clients always use the proper API (\lstinline@gen_server:call@),
+and which does not implement fault detection or fault recovery.
+\end{tabular}
+
+\section{Running McErlang} 
+\label{running}
+
+To execute a program under McErlang, one of the functions
+in the \lstinline{mce} module should be called. A convenient way
+to start Erlang with all the modules comprising the McErlang tool
+available is to run the script \texttt{mcerl}.
+
+Functions for starting McErlang:
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+mce:start(Conf::conf())
+\end{lstlisting}
+Starts McErlang using the configuration specified in \lstinline{Conf}
+(see below for details).
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce:apply(Module::atom,FunName::atom,Arguments::[term()])
+mce:apply(Module::atom,FunName::atom,Arguments::[term()],Conf::conf())
+\end{lstlisting}
+Starts McErlang using the configuration specified in \lstinline{Conf} --
+if specified -- to check the specified function.
+If a configuration is not provided, then a default one is used
+(using a safety checking algorithm, not checking any monitor, \ldots).
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce:shell()
+\end{lstlisting}
+Starts a rudimentary shell for experimenting (using a simulation algorithm) 
+with the McErlang tool. 
+\end{itemize}
+
+\subsection{Model Checking Configuration}
+\label{configuration}
+
+The configuration of a model checking run is specified using
+a record structure (\lstinline@mce_opts@).
+The best way of making the definition of \lstinline@mce_opts@
+available to the Erlang shell is through
+the following command:
+\begin{lstlisting}[language=Erlang]
+1> rr(mce:find_mce_opts()).
+\end{lstlisting}
+The relevant fields of are enumerated below:
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+program = {Module::atom(),FunName::atom(),Arguments::[term()]} 
+        | {Function::fun(), Arguments::[term()]}
+\end{lstlisting}
+Specifies the initial function of the program.
+\item
+\begin{lstlisting}[language=Erlang]
+algorithm = {Module::atom(),InitArg::term()}          
+\end{lstlisting}
+Specifies the type of algorithm used for
+traversing the program state space
+(see Section~\ref{algorithms} below for details on algorithms).
+The default algorithm is \lstinline@mce_alg_safety@.
+\item
+\begin{lstlisting}[language=Erlang]
+monitor = {Module::atom(),InitArg::term()}
+\end{lstlisting}
+Specifies the correctness monitor used to check
+the behaviour of the program.
+Monitors are either {\em safety monitors} which should
+be checked in every program state,
+or {\em b\"uchi monitors} which encode linear temporal logic properties (LTL).
+The \texttt{Ltl2Buchi} tool can be used to translate
+LTL properties into b\"uchi monitors (see Section~\ref{Ltl2buchi} for details).
+Further details on monitors are given in Section~\ref{monitors}.
+The default monitor never reports an error.
+\item
+\begin{lstlisting}[language=Erlang]
+abstraction = {Module::atom(),InitArg::term()}       
+\end{lstlisting}
+Abstraction implementation (see Section~\ref{abstractions} for details).
+The default abstraction preserves all properties of the states
+and actions to which it is applied.
+\item
+\begin{lstlisting}[language=Erlang]
+table = {Module::atom(),InitArg::term()}          
+\end{lstlisting}
+State table implementation (see Section~\ref{tables} for details).
+The default table hashes on the stored states, but
+does not store transitions.
+\item
+\begin{lstlisting}[language=Erlang]
+stack = {Module::atom(),InitArg::term()}
+\end{lstlisting}
+Stack implementation (see Section~\ref{stacks} for details).
+The default stack implementation is \lstinline@mce_stack_list@.
+\item
+\begin{lstlisting}[language=Erlang]
+scheduler = {Module::atom(),InitArg::term()}
+\end{lstlisting}
+A scheduler determines which transitions are taken (in simulation
+mode, see Section~\ref{schedulers} for details).
+The default scheduler (\lstinline@mce_sched_rnd@)
+selects randomly a new transition.
+\end{itemize}
+
+There are also a number of fields, which when specified,
+can change the behaviour of state space exploration algorithms
+and the McErlang runtime system.
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+sim_external_world = true() | false()
+\end{lstlisting}
+If this flag is set the model checker will
+interface with the external world in simulation mode (i.e.,
+will receive messages sent from other processes outside the simulation).
+\item
+\begin{lstlisting}[language=Erlang]
+pathLimit = int()
+\end{lstlisting}
+Limit execution paths to a maximum depth (not set by default).
+\item
+\begin{lstlisting}[language=Erlang]
+shortest = true() | false()
+\end{lstlisting}
+If the flag is set tries to compute the shortest path to failure
+(default false).
+\item
+\begin{lstlisting}[language=Erlang]
+terminate = true() | false()
+\end{lstlisting}
+If set, the runtime system will randomly terminate processes
+(default false).
+\item
+\begin{lstlisting}[language=Erlang]
+notice_exits = true() | false()
+\end{lstlisting}
+Warn when a process terminates abnormally due to an uncaught exception
+(default true).
+\item
+\begin{lstlisting}[language=Erlang]
+fail_on_exit = true() | false()
+\end{lstlisting}
+Stop a model checking run if a process
+terminates abnormally due to an uncaught exception
+(default true).
+\item
+\begin{lstlisting}[language=Erlang]
+is_infinitely_fast = true() | false()
+\end{lstlisting}
+Prohibits (non-zero) timeouts (caused by \lstinline@after@ clauses in
+\lstinline@receive@ statements) from occurring if
+non-timeout transitions are enabled.
+This corresponds to the assumption that the system
+is infinitely fast (default false).
+\item
+\begin{lstlisting}[language=Erlang]
+sim_actions = true() | false()
+\end{lstlisting}
+Print actions that occur during a simulation run (using the debugger or
+the algorithm \lstinline@mce_alg_simulation@)
+(default false).
+\item
+\begin{lstlisting}[language=Erlang]
+seed = {int(),int(),int()}
+\end{lstlisting}
+Specify the initial seed (used by the randomised scheduler).
+\item
+\begin{lstlisting}[language=Erlang]
+record_actions = true() | false()
+\end{lstlisting}
+Record seen actions during a model checking run
+(default true).
+\item
+\begin{lstlisting}[language=Erlang]
+random = true() | false()
+\end{lstlisting}
+Randomize the order of transitions. This option
+is typically used when 
+using a safety or liveness model checking algorithm, as the specified scheduler
+(using \lstinline{scheduler=}) is not used for such algorithms
+(default false).
+\item
+\begin{lstlisting}[language=Erlang]
+time_limit = int()
+\end{lstlisting}
+Stops model checking after the time limit on
+the running time of the verification, specified in seconds,
+has been reached (default unlimited), with an inconclusive result.
+\item
+\begin{lstlisting}[language=Erlang]
+rpc = true() | false()
+\end{lstlisting}
+Support for the \lstinline{rpc} module re-implementation in McErlang
+(default false).
+\item
+\begin{lstlisting}[language=Erlang]
+small_pids = true() | false()
+\end{lstlisting}
+Controls whether McErlang tries to aggressively reuse process identifiers
+as soon as possible. Such reuse is costly in terms of execution speed,
+but generally necessary to obtain finite models during model checking.
+Default true for model checking algorithms, and
+false for simulation algorithms.
+\end{itemize}
+
+\subsection{State Space Traversal Algorithms}
+An algorithm determines the particular state space exploration strategy
+used by McErlang. 
+If no algorithm is specified, the default one is \lstinline@mce_alg_safety@.
+The result of a model checking run is a ``result value'' which can be
+inspected using the functions in the \lstinline@mce_result@ module.
+The result value is normally stored in the process dictionary under
+the key \lstinline@result@.
+If the result represents an error (a failed monitor, a process
+died normally due to an exception) the behaviour of the program
+up to the point of the error can be studied in further detail
+in the McErlang debugger using the command:
+\begin{lstlisting}[language=Erlang]
+mce_erl_debugger:start(mce:result()).
+\end{lstlisting}
+
+\subsubsection{Algorithm Termination}
+
+%%A verification run can fail to terminate, or terminate due to some internal
+%%error condition such as when the Erlang runtime system runs out of memory.
+%%Trivially a verification run will not terminate if the program
+%%being checked has a reachable infinite loop in which a receive
+%%statement does not occur\footnote{unless the compilation
+%%option \lstinline{-sends_are_sefs}
+%%is specified, in which sends also may suffice.}.
+%%An example is the following function:
+%%\begin{lstlisting}[language=Erlang]
+%%loop() -> loop().
+%%\end{lstlisting}
+
+A verification may fail if the state space is too large to explore
+given the amount of memory available, this happens fairly frequently
+in model checking as most algorithms need to store encountered
+states in a state table. A possibility to alleviate this problem is to
+select the \lstinline@mce_table_bitHash@ table module for storing encountered
+states (see Section~\ref{tables} for details).
+Another option is to use a bounded state stable,
+available as the module \lstinline@mce_table_hash_bounded@.
+
+Even though the state table size may be bounded, the verification
+algorithms may still run out of memory if the ``verification stack'',
+which stores the list of encountered states in a single program trace,
+grows too long (thus consuming too much memory).  This problem can
+occur if the module is faulty, for instance if an ever increasing
+counter is included in the program. Such counters are, potentially,
+process identifiers, references (created using
+\lstinline@erlang:make_ref()@, timestamps (i.e., calling
+\lstinline@erlang:now()@) and so on. However, McErlang makes sure,
+when model checking but {\em not} when simulating code, that process
+identifiers and references are not represented by ever increasing
+counters but selected {\em fresh} (i.e., as the least unused value in
+some ordering of pids and references).  A good method to detect
+problems with long verification stacks is to regularly output created
+states and to manually inspect them to see if some part of them look
+amiss (such printouts may be inserted in a custom monitor for
+instance).  There are other fixes as well: the length of the
+verification stack may be limited using the \lstinline@pathLimit=N@
+option (in the \lstinline@mce_opts@ record), and secondly a bounded
+stack implementation may be specified (using for instance a directive
+\lstinline@stack={mce_stack_bounded,Size}@ also in the
+\lstinline@mce_opts@ record, see Section~\ref{stacks} for details).
+
+To help detect such problems the model checking algorithms
+\lstinline@mce_alg_safety@ and \lstinline@mce_alg_behaviour@ regularly
+print out statistics regarding the number of states generated, and the
+length of the verification stack:
+\begin{lstlisting}
+Path depth at 10000 entries
+\end{lstlisting}
+This indicates that the length of the maximum execution path has reached
+10000 entries.
+
+\begin{lstlisting}
+Generated states 70000; checked states 247709; relation 3.5387
+\end{lstlisting}
+The second printout indicates that 70000 distinct program states have
+been encountered, while the verification run has generated 247709 (non-unique)
+states in total, for a ratio of 3.5387.
+
+\subsubsection{Listing of Available Algorithms}
+
+\label{algorithms}
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+mce_alg_simulation
+\end{lstlisting}
+This algorithm implements a basic simulation algorithm. In every
+encountered program 
+state only a single transition is chosen.
+During the simulation a safety program monitor is checked.
+
+If you wish to allow your program to communicate with the 
+outside McErlang (accept messages sent by other processes)
+the \lstinline@sim_external_world@ option in \lstinline@mce_opts@ 
+should be set to true. An example specific scheduler can be specified
+using the \lstinline@scheduler@ field in \lstinline@mce_opts@.
+This algorithm does not require any initial argument.
+
+Suppose as an example that we want to run the \lstinline@example:start@
+example in Section~\ref{sect_example} using the simulation algorithm:
+\begin{lstlisting}
+> mcerl
+Erlang (BEAM) emulator version 5.6.5 [source] [smp:4] ...
+
+Eshell V5.6.5  (abort with ^G)
+1> rr(mce:find_mce_opts()).   
+[mce_opts]
+2> mce:start(#mce_opts{program={example,start,[]},
+                       algorithm={mce_alg_simulation,void}}).
+Starting McErlang model checker environment version 1.0A ...
+
+Starting mce_alg_simulation(void) algorithm on program
+example:start()
+with monitor mce_mon_test(ok)
+
+...
+Execution terminated normally
+Access result using mce:result()
+ok
+3> 
+\end{lstlisting}
+Aha, no error this time. This is because we only explored one execution trace.
+Note that we in the first line
+read in the record definition of \lstinline{mce_opts}, so that we are allowed
+to use the syntax \lstinline@#mce_opts{program=...}@ in the Erlang shell.
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce_alg_debugger
+\end{lstlisting}
+Runs the debugger on the selected program, see Section~\ref{debugger}.
+This algorithm does not require any initial argument.
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce_alg_safety
+\end{lstlisting}
+Checks the specified monitor, which {\em must} be of type \lstinline@safety@,
+on all program states of the program. 
+Note that the option \lstinline@sim_external_world@
+has no effect (the algorithm makes the ``closed world assumption'',
+whereby no message ever arrives from outside the specified program).
+This algorithm does not require any initial argument.
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce_alg_buechi
+\end{lstlisting}
+Checks the specified monitor, which {\em must} be of type \lstinline@buechi@,
+on the program. 
+Note that the option \lstinline@sim_external_world@
+has no effect (the algorithm makes the ``closed world assumption'',
+whereby no message ever arrives from outside the specified program).
+This algorithm does accept an initial argument,
+\lstinline@{process_fairness,bool()}@, which specifies that the
+program should be checked
+under a process fairness assumption if the \lstinline@bool()@
+option is true (the default value of the parameter is true).
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce_alg_safety_parallel
+\end{lstlisting}
+Checks the specified monitor, which {\em must} be of type \lstinline@safety@,
+on all program states of the program.
+This algorithm makes use of the symmetric multiprocessing implementation
+of Erlang to use, potentially, multiple processors or cores
+to speed up the model checking run.
+It accepts an initial argument specifying the number
+of Erlang process schedulers to run (there may be more process
+schedulers running that the number of processor elements available).
+An example:
+\begin{lstlisting}[language=Erlang]
+mce:start(#mce_opts{program={example,start},
+                    algorithm={mce_alg_safety_parallel,4}})
+\end{lstlisting}
+checks the \lstinline@example:start@ program using 4 process
+schedulers.
+Note that the option \lstinline@sim_external_world@
+has no effect (the algorithm makes the ``closed world assumption'',
+whereby no message ever arrives from outside the specified program).
+\item
+\label{mce_alg_combine}
+\begin{lstlisting}[language=Erlang]
+mce_alg_combine
+\end{lstlisting}
+This algorithm provides a method to combine to other state space
+exploration algorithms. It accepts a parameter which enumerates
+the two different sub-algorithms. An example:
+\begin{lstlisting}[language=Erlang]
+algorithm=
+  {mce_alg_combine,
+     {#mce_opts{algorithm={mce_alg_simulation,void},
+		           scheduler={locker_sched,void}},
+      #mce_opts{algorithm={mce_alg_safety,void},
+	                   monitor={monMutex,[]},
+			   table={mce_table_hashWithActions,[]}}}}
+\end{lstlisting}
+The example specifies that first a simulation algorithm should be run,
+using a custom scheduler \lstinline@locker_sched@, and when the simulation
+terminates (successfully), the safety model checking algorithm 
+\lstinline@mce_alg_safety@ algorithm should be run.
+
+In practise this algorithm can be used to throw away an initial segment
+of the behaviour of a program which is deemed uninteresting, to permit
+focusing on a latter part. A particular example is to check only a system
+after when it is has stabilised after the completion
+of the starting-up phase (perhaps programmed
+using the OTP supervisor behaviour \lstinline@gen_supervisor@). It is
+a method to save memory space.
+\end{itemize}
+
+\subsection{Monitors}
+\label{monitors}
+A monitor is conceptually an observer which examines
+program states, and program actions, 
+and which is run in lock-step with the the program to verify.
+A monitor has an internal state.
+
+Upon examining a state, and the program action leading to the state
+from the previous state, a monitor can either return a set of
+new monitor states
+(signalling an acceptable program state), or an error condition signalling
+that the program state failed the monitor. 
+
+There are two types of monitors in McErlang: ``safety monitors'' which
+are deterministic (i.e., return only a single next monitor state) and
+``b\"uchi monitors'' which implement B\"uchi automata. Such monitors
+may be nondeterministic, and in addition each monitor state is marked
+either ``accepting'' or ``non-accepting''. The \lstinline@mce_alg_buechi@
+verification algorithm signals an error if it discovers an infinite loop
+(through the combined program state and monitor state graph)
+containing only accepting monitor states.
+
+In the McErlang repository we have included
+an associated tool, Ltl2Buchi, written by Hans Svensson,
+which can automatically
+translate a formula in Linear Temporal Logic (LTL)
+to a corresponding B\"uchi automaton. See Section~\ref{Ltl2buchi} for details.
+
+In the code listing in Figure~\ref{mce_mon_nondeadlock}
+we show the source code for
+a simple safety to detect deadlocks.
+\begin{figure}
+\begin{lstlisting}[language=Erlang]
+-module(mce_mon_deadlock).
+-export([init/1,stateChange/3,monitorType/0]).
+
+-include("state.hrl").
+-include("process.hrl").
+-include("node.hrl").
+
+-behaviour(mce_behav_monitor).
+
+init(State) -> {ok,State}.
+
+stateChange(State,MonState,_) -> 
+  case is_deadlocked(State) of
+    true -> deadlock;
+    false -> {ok, MonState}
+  end.
+
+is_deadlocked(State) ->
+  State#state.ether =:= [] andalso
+  case mce_erl:allProcesses(State) of
+     [] -> false;
+     Processes ->
+       case mce_utils:find
+            (fun (P) -> P#process.status =/= blocked end,
+	     Processes) of
+         {ok, _} -> false;
+         no -> true
+       end
+  end.
+
+monitorType() -> safety.
+\end{lstlisting}
+\caption{The \lstinline@mce_mon_nondeadlock@ monitor}
+\label{mce_mon_nondeadlock}
+\end{figure}
+A monitor should be an Erlang/OTP behaviour that conforms
+to the \lstinline@mce_behav_monitor@ (see \texttt{www.erlang.org}
+for details on behaviours, in reality the only requirement on a McErlang
+monitor is that it exports
+three functions: \lstinline@monitorType/0@,
+\lstinline@init/1@ and \lstinline@stateChange/3@.
+A ``B\"uchi'' monitor must also export a function
+\lstinline@stateType/1@ which marks a state
+as either \lstinline@accepting@ or
+\lstinline@nonaccepting@.
+
+The \lstinline@stateChange/3@ function
+gets called by the chosen verification
+algorithm using three parameters:
+\begin{lstlisting}[language=Erlang]
+stateChange(ProgramState,MonitorState,VerificationStack)
+\end{lstlisting}
+In the example the safety monitor examines
+the program state, and if all processes are
+deadlocked, an atom \lstinline@deadlock@
+is returned (signalling a monitor failure),
+and if a non-deadlock process exists
+a new monitor state \lstinline@{ok,MonState}@
+(identical to the old state)
+is returned.
+
+We can check a general program with the above monitors by specifying
+it in a \lstinline@mce_opts@ record:
+\begin{lstlisting}[language=Erlang]
+mce:start(#mce_opts{program={example,start,[]},
+                    monitor={mce_mon_nondeadlock,void}}).
+\end{lstlisting}
+
+\subsubsection{Observational Power of Monitors}
+The above example only inspects the program
+state parameter to the \lstinline@stateChange@ function.
+The application programming interface for examining program states
+is stable with regards to examining invariant state components
+(process mailboxes, process status, node names, 
+process dictionaries, etc) but there is currently no well-defined
+mechanism for retrieving the value of program variables from 
+a program state\footnote{This is still possible in many cases,
+but we prefer not to document the mechanisms here as they are fragile
+causing the retrieval of variable values
+to break if changes are made to the translation
+strategy of McErlang. We plan to rectify this
+problem in a new version of McErlang.}.
+
+An alternative is to instead inspect the actions a program causes.
+The third parameter to \lstinline@stateChange@ is the verification stack,
+which contains the actions of the programs (if the 
+field \lstinline@record_actions@ in \lstinline@mce_opts@ is not false).
+The actions that the program performed after leaving the program state,
+and before entering the program state now checked is returned
+as a list by the following code fragment:
+\begin{lstlisting}[language=Erlang]
+  {Entry,_} = mce_behav_stackOps:pop(VerificationStack),
+  Entry#stackEntry.actions.
+\end{lstlisting}
+
+The McErlang modules \lstinline@mce_erl@ and
+\lstinline@mce_erl_actions@ contains application interfaces for
+examining program actions.
+
+A convenient means to determine if a program has performed
+a certain action is to instrument said program with synthetic
+probe actions, and during model checking determine if these
+synthetic actions are present. 
+A program can cause a probe action by calling the 
+\lstinline@mce_erl:probe(Label::term(),Term::term())@ or
+\lstinline@mce_erl:probe(Label::term())@ functions
+(where \lstinline@Label@ and \lstinline@Term@ are general terms).
+
+As an example we show a fragment of a client that allocates resources
+by sending a request message to a (\lstinline@gen_server@),
+and then releasing the resource by sending a new message:
+\begin{lstlisting}[language=Erlang]
+  gen_server:call(Locker, request),
+  mce_erl:probe(inUse),
+  gen_server:call(Locker, release)
+\end{lstlisting}
+The property we want to establish is mutual exclusion,
+i.e., that there are not two clients simultaneously accessing 
+the shared resource. To do this we instrument the client 
+to perform a probe action whenever a resource has been granted,
+and before it is has been released.
+
+We can then check for the existence of a ``mutual exclusion failure''
+using the following safety monitor fragment:
+\begin{lstlisting}[language=Erlang]
+init(State) -> {ok,init}.
+
+stateChange(_State,init,Stack) -> 
+  case has_probe_action(actions(Stack)) of
+    {true, inUse} -> {ok, inUse};
+    no -> {ok, init}
+  end;
+stateChange(_State,inUse,Stack) ->
+  case has_probe_action(actions(Stack)) of
+    {true, release} -> {ok, init};
+    {true, inUse} -> {inUse, twice};
+    no -> {ok, inUse}
+  end.
+
+actions(Stack) ->
+  {Entry,_} = mce_behav_stackOps:pop(Stack),
+  case Entry#stackEntry.actions of
+    void -> [];
+    Other -> Other
+  end.
+ 
+has_probe_action(Actions) ->
+   mce_utils:findret(fun mce_erl:match_probe_label/1, Actions).
+\end{lstlisting}
+
+\paragraph{Using probe states to write properties}
+
+Working with probe actions in LTL formulas can sometimes be difficult,
+as we have manually ``remember'' the occurrence of
+important actions in the formula. 
+
+Instead of using probe actions we can use so called ``probe states''.
+In contrast to probe actions, which are enabled in a single
+transition step only, such probes are persistent from the point in 
+the execution of the program when they are enabled, until they 
+are explicitly deleted. Internally they are stored in the
+global system dictionary (accessible using the McErlang API functions
+\lstinline@gget/1@, et.c.).
+
+A probe state is asserted using the functions
+\begin{lstlisting}[language=erlang]
+mce_erl:probe_state(Label::term())
+mce_erl:probe_state(Label::term,Term::term)
+\end{lstlisting}
+
+A probe state must be explicitly retracted using the function
+\begin{lstlisting}[language=erlang]
+mce_erl:del_probe_state(Label::term())
+\end{lstlisting}
+when it no longer should hold.
+
+We can test for the existence of a probe state using
+the function 
+\begin{lstlisting}[language=erlang]
+mce_erl:has_probe_state(Label::term(),ProgramState::mcErlangState()) ->
+  bool()
+\end{lstlisting}
+and the term corresponding to a probe state label for an enabled probe state
+can be retrieved using the function:
+\begin{lstlisting}[language=erlang]
+mce_erl:get_probe_state(Label::term(),ProgramState::mcErlangState()) ->
+  term()
+\end{lstlisting}
+
+\subsubsection{Some Available Monitors}
+Most monitors are rather application specific, but there are 
+some generic ones implemented. Note also that in some situations
+it may not be necessary to specify any monitor at all; the default
+monitor is the always true one, but since the default setting
+for the \lstinline@fail_on_exit@ flag of \lstinline@mce_opts@
+is true, the model checker will verify that no process 
+is ever abnormally terminated.
+
+Below we show the tuples naming the monitors, and their
+respective arguments (to be specified in the \lstinline@monitor@
+field of \lstinline@mce_opts@).
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+{mce_mon_queue, MaxQueueSize::int()}
+\end{lstlisting}
+Checks that all queues contain at most \lstinline{MaxQueueSize} elements.
+
+\item
+\begin{lstlisting}[language=Erlang]
+{mce_mon_deadlock, Any::any()}
+\end{lstlisting}
+Checks that there is at least one non-deadlocked process.
+\end{itemize}
+
+\subsection{Abstractions}
+\label{abstractions}
+Abstractions are functions that abstract the state space,
+or actions. The model checking algorithms (e.g., \lstinline@mce_alg_safety@)
+uses such an abstraction to compute a ``normal form'' for a state
+before checking whether a newly generated state has been previously
+visited (checking for membership in the state table).
+
+As an example we show the code for the \lstinline@mce_abs_hash@
+abstraction module:
+\begin{lstlisting}[language=Erlang]
+-module(mce_abs_hash).
+-export([init/1, abstract_actions/2,abstract_state/2]).
+-behaviour(abstraction).
+
+init(Size) -> {ok,Size}.
+abstract_actions(A,Size) -> {A,Size}.
+abstract_state(State,Size) -> {erlang:phash2(State,Size),Size}.
+\end{lstlisting}
+Such abstraction modules should conform to the \lstinline@mce_abs_hash@
+behaviour, i.e., export an \lstinline@init@ function,
+a state abstraction function \lstinline@abstract_state@
+and an action abstraction function \lstinline@abstract_actions@.
+An abstraction module can use a private state, which is passed
+along as a parameter and is kept using the verification algorithm.
+
+Concretely the \lstinline@mce_abs_hash@ module above implements
+a ``hash abstraction'', whereby the whole program state is mapped
+to a hash value (an integer). The size of the hash table
+is sent along as the private data to the abstraction functions.
+
+\subsection{Tables}
+\label{tables}
+
+Tables records encountered
+program states (typically using a hash table).
+The following tables are implemented:
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+mce_table_hash
+\end{lstlisting}
+implements a hash table using an Erlang \lstinline@ets@ table.
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce_table_hashWithActions
+\end{lstlisting}
+implements a hash table using an Erlang \lstinline@dict@ data
+structure, also storing actions between states.
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce_table_bitHash
+\end{lstlisting}
+implements a hash table where states are hashed into
+an integer value, and there is no collision handling.
+That the actual states themselves are not stored in
+the table, only a bit indicating whether the table
+entry contains an element or not.
+Note that this algorithm is not currently
+available under Windows as it relies on a HiPE private function
+for efficiency,
+which is not yet implemented on that operating system.
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce_table_hash_bounded
+\end{lstlisting}
+implements a hash table with a bounded maximum 
+size. If during verification
+the size of the hash table has to be increased, 
+verification stops and McErlang returns an inconclusive result.
+\end{itemize}
+
+\subsection{Stacks}
+\label{stacks}
+A stack is used to store verification stack, i.e., the program
+states (together with an associated monitor state -- 
+a {\em verification state}) encountered
+on the run from the initial verification state to the current one.
+
+Available stacks:
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+mce_stack_list
+\end{lstlisting}
+An unbounded list based stack implementation.
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce_stack_bounded
+\end{lstlisting}
+An bounded stack implementation, which accepts as parameter
+the bound. If the stack overflows, the most recent entries overwrites
+the oldest ones.
+That is, it can be specified as follows in the
+\lstinline@mce_opts@ record:
+\begin{lstlisting}[language=Erlang]
+#mce_opts{stack={mce_stack_bounded,Bound::int()},...}
+\end{lstlisting}
+
+\item
+\begin{lstlisting}[language=Erlang]
+mce_stack_onePlace
+\end{lstlisting}
+A bounded stack with just one place.
+\end{itemize}
+
+\subsection{Schedulers}
+\label{schedulers}
+A scheduler determines the scheduling policy during a simulation
+run (using the \lstinline@mce_alg_simulation@ algorithm).
+Figure~\ref{locker_sched} illustrates a particular implementation.
+
+\begin{figure}
+\begin{lstlisting}[language=Erlang]
+-module(locker_sched).
+-export([init/1,choose/4,willCommit/1]).
+
+-behaviour(mce_behav_scheduler).
+
+init(StartState) -> {ok,StartState}.
+
+willCommit(_) -> true.
+  
+choose(Transitions,SchedState,Monitor,Conf) ->
+  FilteredTransitions =
+    lists:filter
+      (fun reqFilter/1,
+       lists:map
+       (fun (T) -> mce_erl_opsem:commit(T,Monitor,Conf) end, Transitions)),
+
+  case length(FilteredTransitions) of
+    N when N>0 ->
+      SelectedNumber = random:uniform(N),
+      {ok,{lists:nth(SelectedNumber,FilteredTransitions),SchedState}};
+    0 -> no_transitions
+  end.
+
+reqFilter({Actions,_}) -> not(lists:any(fun send2locker/1, Actions)).
+
+send2locker(Action) ->
+  case mce_erl_actions:is_send(Action) of
+    true -> mce_erl_actions:get_send_pid(Action)=:=locker;
+    false -> false
+  end.
+\end{lstlisting}
+\caption{A custom scheduler}
+\label{locker_sched}
+\end{figure}
+
+The scheduler forbids any action which is the result of sending
+a message to a process with the registered name \lstinline@locker@.
+This scheduler is used in the example on page~\pageref{mce_alg_combine}
+to steer a simulation algorithm, which is followed by running
+a model checking algorithm (\lstinline@mce_alg_safety@).
+The idea is that the simulation part should explore the initial startup
+of the system, forbidding any action that involves actually requesting
+resources from the \lstinline@locker@ process. Once there is no schedulable
+transition (except the ones involving sends to the locker) the simulation
+phase ends, and model checking begins.
+
+\subsection{The Debugger: Examining Counterexamples}
+\label{debugger}
+
+The result of a McErlang run is normally saved in the process dictionary
+under the key \lstinline{result}. In case a counterexample has been
+found the run can be examined further using the McErlang debugger which
+can be started using the function call 
+\lstinline{mcerlang:start(mce:result())}. The debugger is also
+useful for exploring the execution of a program in a step-by-step
+fashion.
+
+The debugger is used to examine the execution stack of the 
+failed program, using the set of commands enumerated below. 
+Conceptually the user can move forwards and backwards in the stack 
+to examine its content, single step through the transitions of 
+a program, etc.
+
+\subsubsection{Starting the Debugger}
+
+The debugger can be started in a number
+of ways. If a counterexample has been produced, and is stored
+in the process dictionary under the key \lstinline{result},
+the normal manner is to invoke the debugger using the \lstinline{start}
+function applied to \lstinline{mce:result()}.
+
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+mce_erl_debugger:start(Object::debugger_object())
+        debugger_object() = stack() | mce_result()
+\end{lstlisting}
+The result of a model checking run has the type \lstinline{mce_result()};
+such a result may contain an execution stack (of type \lstinline{stack()}) which
+is needed to run the debugger.
+\end{itemize}
+
+It is not necessary to generate a counterexample before starting the debugger,
+another method to begin a debugging session is to specify the algorithm
+\lstinline{mce_alg_debugger} in the \lstinline{mce_opts} structure:
+\begin{lstlisting}[language=Erlang]
+mce:start
+  (#mce_opts
+   {program={Module,Program,Args},
+    algorithm={mce_alg_debugger,void}}).
+\end{lstlisting}
+In addition the \lstinline@mce:debug/N@ function calls start
+the debugger directly (by specifying the \lstinline@mce_alg_debugger@
+algorithm).
+
+\subsubsection{Debugger Commands}
+These are commands available in the
+command loop of the model checker,
+in addition to the normal Erlang
+functions.
+
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+int()
+choose(N::int())
+\end{lstlisting}
+Chooses the corresponding
+transition to compute the next state.
+
+\item
+\begin{lstlisting}[language=Erlang]
+step()
+step(N::int())
+\end{lstlisting}
+Executes \lstinline{N} computation steps.
+
+\item
+\begin{lstlisting}[language=Erlang]
+run()
+\end{lstlisting}
+Runs the program until it halts.
+
+\item
+\begin{lstlisting}[language=Erlang]
+printTransitions()
+\end{lstlisting}  
+Shows all transitions from the current state.
+
+\item
+\begin{lstlisting}[language=Erlang]
+printState()
+printEther()
+printNodeNames()
+printProcessNames()
+printNode(NodeName::atom())
+printProcess(Pid::pid())
+\end{lstlisting} 
+Prints different components of
+the current state.
+
+\item
+\begin{lstlisting}[language=Erlang]
+showExecution()
+\end{lstlisting}  
+Show the complete run starting from initial state to the final state.
+
+\item
+\begin{lstlisting}[language=Erlang]
+where()
+where(N::int())
+\end{lstlisting}
+Shows the execution context (the last \lstinline{N} stack frames).
+
+\item
+\begin{lstlisting}[language=Erlang]
+back()
+back(N::int())
+\end{lstlisting}
+Moves the ``stack pointer'' towards the beginning of the program execution.
+
+\item
+\begin{lstlisting}[language=Erlang]
+forward()
+forward(N::int())
+\end{lstlisting} 
+Moves the ``stack pointer'' towards the end of the program execution.
+
+\item
+\begin{lstlisting}[language=Erlang]
+goto(N::int())
+\end{lstlisting}
+Moves the stack pointer to stack frame \lstinline{N}.
+
+\item
+\begin{lstlisting}[language=Erlang]
+quit()
+\end{lstlisting}
+Leaves the debugger.
+\end{itemize}
+
+\subsection{The Shell: Experimenting with McErlang}
+\label{shell}
+McErlang implements a rudimentary shell which can be used
+to experiment with running code under McErlang.
+The shell is invoked using the function \lstinline@mce:shell()@.
+
+The shell supports an online mapping of Erlang API functions
+to McErlang ones. For example, the expression \lstinline@self()!hello@
+will be mapped to \lstinline@mcerlang:send(mcerlang:self(),hello)@.
+Moreover it is possible to execute a \lstinline@receive@ expression.
+
+As an example, the following shell interaction works as expected,
+although internally the McErlang API is used instead of the
+Erlang one:
+\begin{lstlisting}
+1> mce:shell().
+...
+McErlang::node0@sadrach> self().
+{pid,node0@sadrach,1}
+
+McErlang::node0@sadrach> self()!hello.
+hello
+
+McErlang::node0@sadrach> receive X -> {msg,X} end.
+{msg,hello}
+
+McErlang::node0@sadrach> 
+\end{lstlisting}
+
+Arbitrary functions can be executed in the shell, logically
+executing of a particular node. To switch to executing on a different
+node the function \lstinline@connect_to_node(NodeName::atom())@ can
+be executed.
+
+\paragraph{Limitations}
+For technical reasons it is currently
+not possible to provide anonymous functions as arguments to 
+\lstinline@erlang:spawn@.
+
+\section{Ltl2Buchi: Translation LTL Properties to B\"uchi Automatons}
+\label{Ltl2buchi}
+
+The Ltl2Buchi tool, due to Hans Svensson at the IT University of
+Gothenburg, is used to translate LTL formulas into B\"uchi automata.
+
+These are commands available in the
+command loop of the model checker,
+in addition to the normal Erlang
+functions.
+
+The following functions are available in the module
+\lstinline@mce_ltl_parse@
+for translating LTL formulas into B\"uchi automatons:
+\begin{itemize}
+\item
+\begin{lstlisting}[language=Erlang]
+string(S::string()) -> ltl()
+\end{lstlisting}
+Parses an LTL formula.
+\item
+\begin{lstlisting}[language=erlang]
+ltl_string2module(S::string(),FileName::string()) -> atom()
+\end{lstlisting}
+Parses an LTL formula, converts the LTL formula into a B\"uchi automaton,
+and stores the automaton in \lstinline@FileName@. Returns
+the name of the generated module.
+\item
+\begin{lstlisting}[language=erlang]
+ltl_string2module_and_load(S::string(),ModuleName::atom()) -> atom()
+\end{lstlisting}
+Parses an LTL formula, converts the LTL formula into a B\"uchi automaton,
+and stores the automaton in a temporary location. Returns
+the name of the generated module (\lstinline@ModuleName@).
+\item
+\begin{lstlisting}[language=erlang]
+ltl2module(L::ltl(),FileName::string()) -> atom()
+\end{lstlisting}
+Converts the LTL formula into a B\"uchi automaton,
+and stores the automaton in \lstinline@FileName@. Returns
+the name of the generated module.
+\item
+\begin{lstlisting}[language=erlang]
+ltl2module_and_load(S::string(),ModuleName::atom()) -> atom()
+\end{lstlisting}
+Converts the LTL formula into a B\"uchi automaton,
+and stores the automaton in a temporary location. Returns
+the name of the generated module (\lstinline@ModuleName@).
+\end{itemize}
+
+\subsection{Writing LTL Properties}
+\label{module_ltl}
+LTL properties are composed using the module \lstinline{ltl}.
+The following combinators are available:
+\begin{lstlisting}[language=Erlang]
+ltl() = ltrue() 
+      | lfalse()  
+      | prop(proposition()) 
+      | land(Phi1::ltl(), Phi2::ltl()) 
+      | lor(Phi1::ltl(), Phi2::ltl()) 
+      | lnot(Phi::ltl()) 
+      | implication(Phi1::ltl(), Phi2::ltl()) 
+      | equivalent(Phi1::ltl(), Phi2::ltl()) 
+      | next(Phi::ltl()) 
+      | always(Phi:ltl()) 
+      | eventually(Phi::ltl()) 
+      | until(Psi::ltl(),Phi::ltl()) 
+      | release(Psi::ltl(),Phi::ltl()) 
+
+proposition() = fun atom():atom()/int()
+              | {atom(),atom()}
+              | {var,atom()}
+\end{lstlisting}
+
+Note that we permit variables, denoted by a tuple \lstinline@{var,atom()}@,
+in the specification of a proposition. Such variables may be instantiated
+at runtime.
+
+There is also a LTL parser which given a string argument, 
+accepts the following language:
+\[
+\begin{array}{rcl}
+\mathit{formula} & ::= & \mbox{\lstinline@(@} \mathit{formula} \mbox{\lstinline@)@} \\
+     & | & \mathit{proposition} \\
+     & | & \mathit{formula} \;\mbox{\lstinline@until@}\; \mathit{formula} \\
+     & | & \mbox{\lstinline@always@}\; \mathit{formula} \\
+     & | & \mbox{\lstinline@next@}\; \mathit{formula} \\
+     & | & \mbox{\lstinline@eventually@}\; \mathit{formula} \\
+     & | & \mathit{formula} \;\mbox{\lstinline@or@}\; \mathit{formula} \\
+     & | & \mathit{formula} \;\mbox{\lstinline@and@}\; \mathit{formula} \\
+     & | & \mbox{\lstinline@not@}\; \mathit{formula} \\
+     & | & \mathit{formula} \;\mbox{\lstinline@release@}\; \mathit{formula} \\
+     & | & \mathit{formula} \;\mbox{\lstinline@implies@}\; \mathit{formula} \\
+     & | & \mathit{formula} \;\mbox{\lstinline@equivalent@}\; \mathit{formula}\\ 
+     & | & \mbox{\lstinline@true@} \\
+     & | & \mbox{\lstinline@false@}\\
+\\
+\mathit{proposition} & ::= & \mbox{\lstinline@fun@}\; \mathit{atom} \mbox{\lstinline@:@} \mathit{atom} \mbox{\lstinline@/@} integer\\
+            & | &   \mbox{\lstinline@\{@} \mathit{atom} \mbox{\lstinline@,@} \mathit{atom} \mbox{\lstinline@\}@}\\
+            & | &   \mathit{var}\\
+\end{array}
+\]
+As in normal Erlang, a variable \lstinline@var@ begins with an uppercase
+letter.
+The binding power of the LTL operators range, from looser to tighter,
+\lstinline@implies@, \lstinline@equivalent@, \lstinline@and@, \lstinline@or@, \lstinline@until@, \lstinline@release@, \lstinline@eventually@, \lstinline@always@,
+\lstinline@next@, \lstinline@not@.
+Apart from writing the operators in textual form (e.g., \lstinline@always@),
+the standard abbreviations and alternatives are available
+(e.g., \lstinline@G@,\lstinline@[]@).
+
+\subsection{Interfacing with B\"uchi Automatons}
+As an example we parse a LTL formula, convert into a B\"uchi automaton,
+and load the generated module \lstinline@ltl_test@
+into the Erlang runtime system
+using the following code fragment:
+\begin{lstlisting}
+Module = 
+  ltl_string2module_and_load
+  ("always (P => eventually Q)", 
+   ltl_test).
+\end{lstlisting}
+
+The resulting module is used as an argument in the \lstinline@monitor@ field
+in the \lstinline@mce_opts@ record. 
+
+The generated b\"uchi monitor is parametric on the 
+variables that occur in the LTL formula (as propositional predicates). 
+These parameters are instantiated using the argument in the 
+specification of the \lstinline@monitor@ field, in the 
+\lstinline@mce_opts@ record. Concretely, if an LTL formula $f$
+contains no variables then the corresponding module $m$
+(containing the B\"uchi automaton that is the result of translating $f$)
+should be specified as:
+$\mbox{\lstinline@monitor=\{@}m\mbox{\lstinline@,@}\mathit{private}
+ \mbox{\lstinline@\}@}$
+where $\mathit{private}$ is the initial ``private'' state of
+the proposition predicates (see below for explanation).
+
+In case the generated monitor contains variables
+the \lstinline@monitor=@ specification accepts as argument
+a tuple containing two elements:
+the first is private data that predicate functions may initialise
+and use as they see fit, and the second 
+is a list containing binary tuples with a predicate variable
+as the first element and the function implementing
+the predicate as the second element.
+
+The specification of the \lstinline@ltl_test@ monitor above serves
+as a concrete example:
+\begin{lstlisting}[language=Erlang]
+monitor=
+  {ltl_test,                  %% Monitor name
+  {void,                      %% Predicate function private data
+   [{'P',fun p_mod:p_fun/3},
+    {'Q',fun q_mod:q_fun/3}]}} %% Variable mapping
+\end{lstlisting}
+We remap the \lstinline@P@ variable to a call to 
+the function \lstinline@p_mod:p_fun/3@ (and vice versa for 
+the \lstinline@Q@ variable). The order in which the variable
+mappings are specified does not matter.
+
+A function predicate is called by McErlang using three arguments:
+\begin{lstlisting}[language=Erlang]
+predfun(ProgramState,Actions,PrivateState::term()) -> 
+   true | false | {true, term()}
+\end{lstlisting}
+where \lstinline@ProgramState@ is the current program state,
+\lstinline@Actions@ are the actions from the previous state,
+and \lstinline@PrivateState@ is the current private state.
+A function predicate may return either \lstinline@true@, signalling
+that the predicate holds in the program state,
+\lstinline@false@ signalling that it doesn't, and
+\lstinline@{true, NewPrivateState}@ signalling that the predicate
+holds, and replacing the old private state with the second element 
+of the returned tuple. 
+
+Note that the use of a private state
+for passing information between formula predicates is a rather
+fragile mechanism, but if used wisely it adds expressive power.
+Consider the following example of the specification
+of a resource usage scheme. We want to verify that a request
+for the use of a resource is always eventually followed by a release
+of the said resource. In LTL we can specify the property
+as follows, using the \lstinline@ltl@ module combinator functions:
+\begin{lstlisting}[language=Erlang]
+ltl:always
+  (ltl:implication
+   (ltl:prop(p),
+    ltl:next(ltl:eventually(ltl:prop(q)))))
+\end{lstlisting}
+or more symbolically, 
+\(
+\mathit{G}(\mathit{p} \Rightarrow \mathit{X}(\mathit{F}\; \mathit{q}))
+\).
+
+The two predicate functions corresponding to $\mathit{p}$
+and $\mathit{q}$ are coded as \lstinline@does_request@
+and \lstinline@does_release@ below. They assume that the
+code of the client has been annotated with two probe actions: a release 
+action with the atom \lstinline@release@ as label and
+a request action with the atom \lstinline@request@ as label.
+
+\begin{lstlisting}[language=Erlang]
+does_request(_,Actions,_) ->
+  case mce_utils:findret
+    (fun (Action) -> 
+	 try
+	   true = mce_erl_actions:is_probe(Action),
+	   request = mce_erl_actions:get_probe_label(Action),
+	   {ok,mce_erl_actions:get_source(Action)}
+	 catch _:_ -> false end
+     end, Actions) of
+    {ok, Result} -> {true, Result};
+    _ -> false
+  end.
+      
+does_release(_,Actions,ClientPid) ->
+  lists:any
+    (fun (Action) ->
+	 try
+	   true = mce_erl_actions:is_probe(Action),
+	   release = mce_erl_actions:get_probe_label(Action),
+	   ClientPid = mce_erl_actions:get_source(Action),
+	   true
+	 catch _:_ -> false end
+     end, Actions).
+\end{lstlisting}
+
+The first function searches for probe actions labelled with
+\lstinline@request@, and if one is found, returns the process identifier
+of the client process issuing the probe action as private date.
+The second function searches for probe actions labelled
+with \lstinline@release@ and which moreover was issued
+by the same client process as the \lstinline@request@
+(checked via the \lstinline@ClientPid@ parameter).
+
+Supposing that the translated property is stored in
+the file \lstinline@always_eventually@, the above
+predicate functions are located in the module \lstinline{predfuns},
+and the program
+is started using the function \lstinline@resourcemanager:start()@ 
+then we can invoke a model checking run as follows:
+\begin{lstlisting}[language=Erlang]
+mce:start(#mce_opts{program={resourcemanager,start,[]},
+                    monitor={always_eventually,
+                             {void,
+                              {{predfuns,does_request},
+                               {predfuns,does_release}}}},
+                    algorithm={mce_alg_buechi,void}}).
+\end{lstlisting}
+
+\section{A McErlang Application}
+
+The McErlang application provides an optional interface to McErlang
+configuration, and it keeps the configuration in its state in order to
+easily run several different model checking runs with the same
+configuration. This is feature is most notably used when invoking
+McErlang from QuickCheck\footnote{see \texttt{http://www.quviq.com}}.
+
+\begin{sloppypar}
+The application can be started using either
+\lstinline@mce_app:start/0@ or the more
+formal \lstinline@application:start(mcerlang)@.
+\end{sloppypar}
+
+
+\section{A QuickCheck--McErlang Interface: Experimental Feature}
+
+The QuickCheck--McErlang interface is distributed with QuickCheck
+and provides the capability to use McErlang to verify
+QuickCheck parallel and sequential state machines.
+To start a verification run using the interface first the 
+McErlang application must be started.
+An example QuickCheck property which uses McErlang as the verification
+engine is shown below:
+\begin{lstlisting}
+prop_parallel_mcerlang() ->
+  ?FORALL
+  (PCmds,
+   parallel_commands(?MODULE),
+   ?MCERLANG
+   ([...], % Names of modules in verified program
+    {H,AB,Res},
+    begin
+      ... % Program setup
+      run_parallel_commands(?MODULE,PCmds)
+    end,
+   ?WHENFAIL
+   (io:format("Sequential: ~p\nParallel: ~p\nRes: ~p\n",
+    [H,AB,Res]),
+   Res == ok))).
+\end{lstlisting}
+
+For more information concerning the interface see the tutorial
+\lstinline@eqc_mcerlang_tutorial.pdf@ in the \lstinline@doc@ directory of
+the McErlang distribution.
+
+\section{Module Information}
+
+This section contains an enumeration of a number of modules
+in the McErlang source code that implement important functions:
+
+\begin{tabular}{ll}
+\lstinline@mce@ & Contains functions to start the execution of McErlang \\
+\lstinline@mce_actions@ & Action API (not Erlang specific) \\
+\lstinline@mce_result@ & Handling of model checking results\\ \\
+\lstinline@mce_erl_actions@ & Action API (Erlang specific) \\
+\lstinline@mce_erl_compile@ & Transforming Erlang code for
+running under McErlang\\
+\lstinline@mce_erl_debugger@ & McErlang debugger\\
+\lstinline@mce_erl@ & Functions for constructing and deconstructing
+McErlang terms\\[12pt]
+\end{tabular}
+
+Consult the EDoc based documentation of McErlang for more details
+on these modules and their exported functions.
+
+\bibliographystyle{abbrv}
+\bibliography{}
+
+\end{document}

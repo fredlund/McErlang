@@ -1,0 +1,199 @@
+Working with the Elevator example using McErlang: a set of exercises
+--------------------------------------------------------------------
+
+
+0. Organisation of the course files
+===================================
+
+The source code of the example is in the directory Elevator/src;
+compiled files in the directory Elevator/ebin.  This set of course
+instructions is available in the file exercises.txt.
+
+Some alternative source files for testing are included in the
+directory Elevator/src/file; example correctness properties are
+located in Elevator/src/propertes. The instructions will refer to
+these files when they are needed.
+
+
+1. Using McErlang as a simulation tool
+======================================
+
+Run the elevator example under McErlang as a simulation
+   (using algorithm mce_alg_simulation)
+
+   - The elevator example is started by calling the function
+   sim_sup:start_link(1,NumFloors,NumElevators).
+
+   - To run the example under McErlang:
+
+     + First compile the source code using the supplied Makefile
+     in the directory src/
+     (what does make do? why? where are the beam files stored?)
+
+     + Then start mcerl (in the directory ../ebin, just type
+     ../../../scripts/mcerl) and call mce:start() with the appropriate
+     parameters Experiment with giving orders to the elevators by
+     pushing the elevator buttons.
+
+     Hint: see the run() function if you have problems.
+  
+
+2. Getting started with model checking the example using McErlang
+=================================================================
+
+Model check the example under McErlang -- check whether any 
+runtime exception can occur.
+
+     - To achieve this you can use predefined monitor 
+     mce_mon_test (that always returns true) if the
+     #mce_opts option notice_exits is set to true (the default).
+
+     - Start the elevator system by calling the function
+     run_scenario:run_scenario/1 where the argument
+     is a tuple {MaxFloors,MaxElevators,Commands} and
+     where Commands is a list of commands. A command represents
+     pressing the floor button, or the button inside an elevator to 
+     go to a certain floor. See further documentation in run_scenario.erl
+     (and a set of predefined scenarios in scenarios.erl).
+
+     - Does the elevator system crash?
+
+     Hint:
+     use a command line similar to:
+     mce:start(#mce_opts{program={run_scenario,run_scenario,[{2,1,[{scheduler,f_button_pressed,[2]}]}]}}).
+
+     It is likely that the model checker crashes at this point. Let us compute
+     the shortest path to an error using the "shortest=true" option:
+
+     mce:start(#mce_opts{program={run_scenario,run_scenario,[{2,1,[{scheduler,f_button_pressed,[2]}]}]},shortest=true}).
+
+     - Take a brief look at the error in the debugger:
+     
+     mce_erl_debugger:start(get(result)).
+
+     It turns out that the error is due to a common race condition:
+     the system receives the button press before it has been initialised.
+     This is likely a bug in the elevator code. 
+     However, we will not fix the error here, but use the option 
+     "is_infinitely_fast=true" to always enforce that the button press
+     (which is guarded by a timer) will only arrive at the elevator system
+     when it has been initialised. Let us see what happens:
+
+     mce:start(#mce_opts{program={run_scenario,run_scenario,[{2,1,[{scheduler,f_button_pressed,[2]}]}]},is_infinitely_fast=true}).
+
+     There should be no error found. In the following all the verification 
+     commands will assume that "is_infinitely_fast=true" is always set.
+
+
+
+3. Beginning to formulate correctness properties
+==========================================================
+
+Start formulating correctness properties and check them:
+   
+   - One possibly property to check is
+   "the elevator only stops at floors after being ordered to go there"
+
+   - The file skeleton_monitor.erl contains the skeleton of a safety monitor
+   that can locate orders to go to a certain floor, and to determine when
+   the elevator has reached a floor. However, skeleton_monitor.erl does
+   not actually check any property (never failing). Implement the property
+   above "the elevator only stops at floors after being ordered to go there"
+   by modifying the code of the skeleton monitor.
+
+   Hint 1: can you use MonState to store the floor orders?
+   Hint 2: take a look at the file properties/stop_after_order.erl
+
+   - Check the property against several scenarios (ideally at least 
+   all the monitors returned by scenarios:scenarios/0).
+
+   You can of course use QuickCheck to generate such scenarios too 
+   if you like!
+
+   A convenient method to run a set of scenarios is to execute
+   "check_scenarios:check_scenarios(Scenarios,Monitor)."
+   where Scenarios is the list of scenarios to be checked, and Monitor
+   is name of the monitor to check against the scenarios (an atom).
+   For example: 
+       "check_scenarios:check_scenarios(scenarios:scenarios(),stop_after_order)."
+
+   - Does the monitor fail for any scenario?
+
+   - Why does it fail? 
+     + You can find out using the McErlang debugger
+     (execute mce_erl_debugger:start(get(result)) after a failed model
+     checking run).
+
+     + Another option is to execute the helpful function
+     run_scenario:analyze_error() after a failed model checking run.
+
+     + Can you fix the error? (The error is located in the scheduler
+     of the Elevator system -- in the file scheduler.erl).
+     
+     If you cannot find the error examine the difference between
+     the file scheduler.erl and the file files/scheduler_v1.erl
+     
+  - Does the correctness property still fail?  
+  
+
+4. Fixing bugs in the elevator
+==========================================================
+For the next exercise we assume you have replaced the file scheduler.erl with
+the file files/scheduler_v1.erl.
+
+Try to check some properties against the resulting elevator system.
+For example, check the property "stop_after_relevant_order" in properties/
+(first copy it to the src/ directory and then recompile using "make").
+
+What does the property express? Does it fail? If it fails, why does it fail?
+Can you correct the error? (hint: see the file files/scheduler_v2.erl)
+
+
+5. Define more correctness properties and check them.
+==========================================================
+
+...
+
+
+6. More experiments
+===================
+
+- Replace the file stoplist.erl with files/stoplist_v1.erl.
+Try to check a property, e.g. "stop_after_order". 
+What happens? Why?
+
+Hint:
+for checking a single scenario, and getting more debugging output
+try the function "check_scenarios:check_scenario(Scenario,Monitor)."
+
+- Restore the original file stoplist.erl from files/stoplist_v0.erl.
+
+
+6. Checking Liveness Properties
+==========================================================
+
+Formulate the property:
+	  "after receiving an order to go to a floor, eventually some
+	  elevator stops there"
+in LTL.
+
+Hint: use the function
+         mce_ltl_parse:ltl_string2module_and_load
+	 (FormulaString,AtomModuleName)
+to translate the Formula to a Buechi automaton.
+
+Example:
+	mce_ltl_parse:ltl_string2module_and_load
+	("always not(fun module:go_to_floor/3)")
+checks that there is never any request to go to any floor.
+
+go_to_floor(_,Actions,_) ->
+  lists:any
+    (fun (Action) ->
+	 case interpret_action(Action) of
+	   {stopped_at,_,Floor} -> true;
+	   _ -> false
+	 end
+     end, Actions).
+
+See the file properties/test.erl.

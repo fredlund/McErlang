@@ -1,0 +1,23 @@
+\begin{verbatim}
+McErlang/src/McErlang/examples/Simple_messenger/ebin$ ../../../scripts/mcerl 
+Erlang (BEAM) emulator version 5.6.4 [source] [smp:2] [async-threads:0] [hipe] [kernel-poll:false]
+
+Eshell V5.6.4  (abort with ^G)
+1> run:debug().
+Starting McErlang model checker environment version 1.0 ...
+
+Starting mce_alg_debugger(void) algorithm on program
+scenario:start([[{logon,clara},{message,fred,"hola"},logoff],[{logon,fred}]])
+with monitor mce_mon_test(ok)
+
+...
+
+At stack frame 0: transitions:
+
+1: process <node0@esther,1>:
+    run function scenario:start([[[{logon,clara},{message,fred,"hola"},logoff],
+                          [{logon,fred}]]])
+
+
+stack(@0)> 
+\end{verbatim}

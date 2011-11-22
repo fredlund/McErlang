@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# A stupid shell script for generating a source distribution of McErlang
+TMPDIR=/tmp/McErlang
+
+rm -rf $TMPDIR
+cd /tmp
+svn checkout https://babel.ls.fi.upm.es/repos/McErlang
+cd McErlang
+find . -name .svn -exec rm -rf '{}' \;
+cd ..
+tar cf - McErlang > McErlang_source.tar
+gzip McErlang_source.tar
+
+
+

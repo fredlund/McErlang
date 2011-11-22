@@ -1,0 +1,19 @@
+McErlang is a model checker for programs written in the Erlang
+programming language. The idea is to replace the part of the standard
+Erlang runtime system that concerns distribution, concurrency and
+communication with a new runtime system which simulates processes
+inside the model checker, and which offers easy access to the program
+state.
+
+The model checker has been written by Lars-Åke Fredlund
+and Clara Benac Earle (Facultad de Informática,
+Universidad Politécnica de Madrid, Spain) with contributions
+by Hans Svensson (IT University, Gothenburg, Sweden).
+
+For more information please consult the documentation in:
+
+- the McErlang project wiki (https://babel.ls.fi.upm.es/trac/McErlang/)
+- the doc directory (tutorial and user manual)
+
+
+

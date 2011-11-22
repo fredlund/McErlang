@@ -1,0 +1,8 @@
+Tests
+
+In the module ltl2buchi_eqc some 25 QuickCheck properties are defined
+in order to test the implementation. You need a license of for
+QuickCheck (http://www.quviq.com) to run the tests. Also some of the
+reference implementations used are not included in the repository, see
+test/ref_impl/INFO for information of how to download (the are free!)
+them.

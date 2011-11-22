@@ -1,0 +1,11 @@
+#!/bin/sh
+
+mv languages/erlang/ebin/mce_erl_systemCode.beam /tmp
+mv languages/erlang/ebin/mce_erl_shell.beam /tmp
+mv ebin/mce_version.beam /tmp
+
+dialyzer -Wno_unused -c ebin abstractions/ebin/ behaviours/ebin/ languages/erlang/ebin/ monitors/ebin/ schedulers/ebin/ stacks/ebin/ tables/ebin/ Ltl2Buchi/ebin/ Ltl2Buchi_glue/ebin/ algorithms/ebin/ 
+
+mv /tmp/mce_erl_systemCode.beam languages/erlang/ebin 
+mv /tmp/mce_erl_shell.beam languages/erlang/ebin 
+mv /tmp/mce_version.beam ebin

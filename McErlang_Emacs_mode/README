@@ -1,0 +1,56 @@
+
+
+*************************************************
+**
+**     MCERLANG MODE FOR EMACS 
+**
+*************************************************
+
+This plugin adds "McErlang" tag to Emacs Menu when an Erlang source
+code file (.erl) is opened. As it is currently under development, it
+is very basic and offers limited functionality. It provides easy
+access to most frequently used McErlang functions, as well as some
+structures used by the Model Checker.
+
+If you need any help, please mail:
+
+Álvaro Fernández Díaz     avalor@babel.ls.fi.upm.es
+
+
+
+*************************************************
+**
+**     INSTALLING MCERLANG MODE IN EMACS
+**
+*************************************************
+
+In order to install McErlang Emacs Mode, we have to edit file:
+
+$HOME$/.emacs
+
+and add the following piece of code at any part of it that is not
+inside a function (for instance, at the end of the file).
+
+
+;; McErlang Emacs Mode -- Configuration Start
+(add-to-list 'load-path PathToMcErlangFile*)
+(autoload 'mcerl-erlang-mode-hook "mcerl-ext" "McErlang Mode" t)
+(add-hook 'erlang-mode-hook 'mcerl-erlang-mode-hook)
+(setq mcerl-max-menu-length 30)
+;; McErlang Emacs Mode -- Configuration End
+
+
+* Absolute path of file mcerl-ext.el (for instance
+  "/home/avalor/Learning/McErlangMode")
+
+
+
+*************************************************
+**
+**     INSTALLING MCERLANG MODE IN XEMACS
+**
+*************************************************
+
+
+Similar to the previous process, but modifying file name "init.el" instead of
+".emacs" one.

@@ -1,0 +1,53 @@
+INSTALLATION
+============
+
+The easiest way of using McErlang is by installing it as a normal
+Erlang library.
+
+To install McErlang in the normal Erlang directory structure
+type the line
+
+``mcerlang_install:install().''
+
+to the Erlang shell. Erlang should be started from the same directory
+as this file ("INSTALLATION"). That is,
+
+> erl
+
+Erlang R14B03 (erts-5.8.4) [source] [smp:2:2] [rq:2] [async-threads:0] [hipe] [kernel-poll:false]
+
+Eshell V5.8.4  (abort with ^G)
+1> mcerlang_install:install().
+...
+
+You will probably have to run erlang with super-user priviliges 
+(under Unix/Linux) or administrator privileges (Windows) for
+the installation to succeed.       
+
+After restarting Erlang, you can verify the status of the McErlang installation
+by typing:
+
+> mce_app:start().
+
+in the Erlang shell.
+
+
+SCRIPTS
+=======
+
+If you are using Unix/Linux to run McErlang consider using
+the shell script ``mcerl_compiler'' (located in the same directory as this
+file) to start the McErlang compiler.
+
+
+SOURCE CODE AVAILABLE
+=====================
+
+For the development of McErlang source code, documentation and
+examples we are using the Subversion revision control system. This
+means that there is a central repository where the code is located. To
+get your own local copy of the repository type the following command
+in a terminal window:
+
+$ svn checkout https://babel.ls.fi.upm.es/svn/McErlang/trunk McErlang
+
