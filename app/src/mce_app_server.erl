@@ -167,7 +167,7 @@ verify(undefined) ->
 	undefined;
 verify(MceOpt) ->
 	mce:start(MceOpt),
-    mce:result().
+        mce:result().
 
 %% @hidden
 add_result(State, Res) ->

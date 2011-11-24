@@ -85,18 +85,26 @@ start(Stack, Abstraction, Table, Conf) ->
   {ok, {NTable, _NAbstraction}} = 
     run(Stack, Abstraction, Table, gb_trees:empty(), Conf),
   ?LOG("No more states to explore. Finishing.~n", []),
-  report_states(),
+  report_states(normal),
+  add_state_count(mce_result:mk_ok(NTable)).
+
+add_state_count(Result) ->
   mce_result:add_stored_states
     (get(aStates),
      mce_result:add_explored_states
      (get(nStates),
-      mce_result:mk_ok(NTable))).
+      Result)).
 
-report_states() ->
+report_states(Reason) ->
+  ReasonString = 
+    case Reason of
+      normal -> "normally";
+      exception -> "due to an exception in user code"
+    end,
   mce_conf:format
     (normal,
-     "~n*** Run ending. ~p states explored, stored states ~p, new states ~p.~n",
-     [get(nStates), get(aStates), get(newStates)]).
+     "~n*** Run ending ~s. ~p states explored, stored states ~p, new states ~p.~n",
+     [ReasonString,get(nStates), get(aStates), get(newStates)]).
 
 num_states(_) ->
   ExploredStates =
@@ -159,11 +167,11 @@ run(Stack, Abstraction, Table, New, Conf) ->
 			  continue_running(New, Abstraction1, Table2, Conf);
 			false ->
 			  mce_result:throw_result_exc
-			    (mce_result:add_monitor(NewMon,Result))
+			    (add_state_count(mce_result:add_monitor(NewMon,Result)))
 		      end;
 		    false ->
 		      mce_result:throw_result_exc
-			(mce_result:add_monitor(NewMon,Result))
+			(add_state_count(mce_result:add_monitor(NewMon,Result)))
 		  end
 	      end
 	  end;
@@ -177,7 +185,7 @@ run(Stack, Abstraction, Table, New, Conf) ->
 	      set_path_limit(Depth),
 	      continue_running(New, Abstraction, Table, Conf);
 	    false ->
-	      mce_result:throw_result_exc(Result)
+	      mce_result:throw_result_exc(add_state_count(Result))
 	  end
       end
   end.
@@ -354,19 +362,20 @@ transitions(Sys, Monitor, Stack, Table, Conf) ->
 	     {Actions, #monState{state=NSys, monitor=Monitor}}
 	 catch
 	   {result_exc,Result} ->
-	     report_states(),
+	     report_states(exception),
 	     case mce_result:stack(Result) of
 	       void ->
 		 mce_result:throw_result_exc
-		   (mce_result:add_table
-		    (Table,
-		     mce_result:add_monitor
-		     (Monitor,
-		      mce_result:add_stack
-		      (gen_error_stack(Sys,Monitor,Stack),Result)),Conf));
+		   (add_state_count
+		    (mce_result:add_table
+		     (Table,
+		      mce_result:add_monitor
+		      (Monitor,
+		       mce_result:add_stack
+		       (gen_error_stack(Sys,Monitor,Stack),Result)),Conf)));
 	       _ ->
 		 mce_result:throw_result_exc
-		   (mce_result:add_monitor(Monitor,Result))
+		   (add_state_count(mce_result:add_monitor(Monitor,Result)))
 	     end
 	 end
      end,

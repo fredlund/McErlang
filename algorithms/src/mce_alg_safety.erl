@@ -78,11 +78,7 @@ start(Stack, Abstraction, Table, Conf) ->
     (normal,"~n*** Run ending. ~p states explored, stored states ~p.~n",
      [get(nStates), get(aStates)]),
   ?LOG("No more states to explore. Finishing.~n", []),
-  mce_result:add_stored_states
-    (get(aStates),
-     mce_result:add_explored_states
-     (get(nStates),
-      mce_result:mk_ok(NTable))).
+  add_state_count(mce_result:mk_ok(NTable)).
 
 num_states(_) ->
   ExploredStates =
@@ -145,11 +141,13 @@ run(Stack, Abstraction, Table, Conf) ->
 			  run(Rest, Abstraction1, Table2, Conf);
 			false ->
 			  mce_result:throw_result_exc
-			    (mce_result:add_monitor(NewMon,Result))
+			    (add_state_count
+			     (mce_result:add_monitor(NewMon,Result)))
 		      end;
 		    false ->
 		      mce_result:throw_result_exc
-			(mce_result:add_monitor(NewMon,Result))
+			(add_state_count
+			 (mce_result:add_monitor(NewMon,Result)))
 		  end
 	      end
 	  end;
@@ -163,7 +161,7 @@ run(Stack, Abstraction, Table, Conf) ->
 	      set_path_limit(Depth),
 	      run(Rest, Abstraction, Table, Conf);
 	    false ->
-	      mce_result:throw_result_exc(Result)
+	      mce_result:throw_result_exc(add_state_count(Result))
 	  end
       end
   end.
@@ -270,6 +268,13 @@ report_generated_states() ->
   end,
   put(aStates,NumStates+1).
 
+add_state_count(Result) ->
+  mce_result:add_stored_states
+    (get(aStates),
+     mce_result:add_explored_states
+     (get(nStates),
+      Result)).
+
 %% Remember shortest path
 remember_shortest_path(Depth,Result) ->
   put(shortest,{Depth,Result}).
@@ -292,15 +297,16 @@ transitions(Sys, Monitor, Stack, Table, Conf) ->
 	     case mce_result:stack(Result) of
 	       void ->
 		 mce_result:throw_result_exc
-		   (mce_result:add_table
-		    (Table,
-		     mce_result:add_monitor
-		     (Monitor,
-		      mce_result:add_stack
-		      (gen_error_stack(Sys,Monitor,Stack),Result)),Conf));
+		   (add_state_count
+		    (mce_result:add_table
+		     (Table,
+		      mce_result:add_monitor
+		      (Monitor,
+		       mce_result:add_stack
+		       (gen_error_stack(Sys,Monitor,Stack),Result)),Conf)));
 	       _ ->
 		 mce_result:throw_result_exc
-		   (mce_result:add_monitor(Monitor,Result))
+		   (add_state_count(mce_result:add_monitor(Monitor,Result)))
 	     end
 	 end
      end,
