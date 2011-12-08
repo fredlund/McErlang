@@ -69,6 +69,8 @@ init(Conf, S, Init, Stack, Monitor, Abstraction, Table, _) ->
   case Init of
     {seed,{A,B,C}} ->
       random:seed(A,B,C);
+    {new_size,N} ->
+      put(state_limit,N);
     _ ->
       ok
   end,
@@ -135,8 +137,9 @@ run(Stack, Abstraction, Table, New, Conf) ->
       case mce_behav_monitorOps:stateChange(Sys, Mon, Stack) of
 	skip -> continue_running(New, Abstraction, Table, Conf);
 	{ok, NewMon} ->
-	  case addTransAndState(getPrevState(Stack), Actions,
-				State, Abstraction, Table) of
+	  case addTransAndState
+	    (getPrevState(Stack), Actions,
+	     State, Abstraction, Table, New) of
 	    {exists, _Abstraction1, _Table1} ->
 	      io:format("Fatal error: state already exists???~n",[]),
 	      throw(bad);
@@ -240,17 +243,30 @@ check_transitions(Transitions, Stack, Abstraction, Table, New, Conf) ->
 	lists:foldl
 	  (fun ({State1,Stack1},T) ->
 	       put(newStates,get(newStates)+1),
-	       gb_trees:insert(State1,Stack1,T)
+	       gb_insert(State1,Stack1,T)
 	   end, New, First),
       New2 =
 	lists:foldl
 	  (fun ({State1,Stack1},T) ->
-	       gb_trees:insert(State1,Stack1,T)
+	       gb_insert(State1,Stack1,T)
 	   end, New1, Rest),
       run(Chosen,Abstraction,Table,New2,Conf)
   end.
 
 %%%%%%%
+
+gb_insert(State,Stack,T) ->
+  case get(state_limit) of
+    N when is_integer(N) ->
+      case gb_trees:size(T) of
+	M when M>=N ->
+	  {OldState,_} = get_random_keyvalue(T),
+	  T1 = gb_trees:delete(State,T),
+	  T2 = gb_trees:insert(State,Stack,T);
+	_ -> gb_trees:insert(State,Stack,T)
+      end;
+    undefined -> gb_trees:insert(State,Stack,T)
+  end.
 
 getPrevState(Stack) ->
   {_, Rest} = mce_behav_stackOps:pop(Stack),
@@ -273,7 +289,7 @@ newState(State,Abstraction,Table) ->
     mce_behav_tableOps:permit_state_alt(AbsState, Table),
   NewElement.
 
-addTransAndState(PrevState, Actions, State, Abstraction, Table) ->
+addTransAndState(PrevState, Actions, State, Abstraction, Table, New) ->
   {AbsActions, Abstraction1} =
     mce_behav_abstractionOps:abstract_actions(Actions, Abstraction),
   {AbsState, Abstraction2} =
@@ -288,7 +304,7 @@ addTransAndState(PrevState, Actions, State, Abstraction, Table) ->
 	mce_behav_tableOps:add_trans(PrevState, AbsState, AbsActions, Table)
     end,
   if NewElement ->
-      report_generated_states(),
+      report_generated_states(New),
       Table2 = mce_behav_tableOps:add_state_alt(SavedState, Table1),
       {new, AbsState, AbsActions, Abstraction2, Table2};
      not NewElement ->
@@ -330,16 +346,30 @@ report_path_length(Entry, Depth) ->
   end.
 
 %% report_generated_states
-report_generated_states() ->
+report_generated_states(New) ->
   NumStates = get(aStates),
+  CheckedStates = get(nStates),
+  Limit =
+    case get(state_limit) of
+      N when is_integer(N) -> N;
+      _ -> 10000000000
+    end,
+  NewSize = gb_trees:size(New),
   if
-    (NumStates>0) and (NumStates rem 10000 =:= 0) ->
-      CheckedStates = get(nStates),
+    New =/= Limit, New>0, (New rem 10000) =:= 0 ->
       mce_conf:format
-	(normal,"Generated states ~p; checked states ~p; relation ~p~n",
-	 [NumStates,CheckedStates,CheckedStates/NumStates]);
+	(normal,"Generated states ~p; checked states ~p; relation ~p; new ~p~n",
+	 [NumStates,CheckedStates,CheckedStates/NumStates,NewSize]);
     true ->
-      ok
+      if
+	(NumStates>0) and (NumStates rem 10000 =:= 0) ->
+	  mce_conf:format
+	    (normal,
+	     "Generated states ~p; checked states ~p; relation ~p; new ~p~n",
+	     [NumStates,CheckedStates,CheckedStates/NumStates,NewSize]);
+	true ->
+	  ok
+      end
   end,
   put(aStates,NumStates+1).
 

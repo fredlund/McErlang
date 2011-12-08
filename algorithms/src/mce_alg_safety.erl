@@ -110,8 +110,9 @@ run(Stack, Abstraction, Table, Conf) ->
       case mce_behav_monitorOps:stateChange(Sys, Mon, Stack) of
 	skip -> run(Rest, Abstraction, Table, Conf);
 	{ok, NewMon} ->
-	  case addTransAndState(getPrevState(Stack), Actions,
-				State, Abstraction, Table) of
+	  case addTransAndState
+	    (getPrevState(Stack), Actions,
+	     State, Abstraction, Table) of
 	    {exists, Abstraction1, Table1} ->
 	      {ok, {Table1, Abstraction1}};
 	    {new, AbsState, AbsActions, Abstraction1, Table1} ->
