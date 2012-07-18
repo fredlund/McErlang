@@ -1,10 +1,9 @@
-MAKE = make
 EMAKE = erl -make
 
 all:
-	cd Locker; make
-	cd Simple_messenger; make
+	cd Locker; $(MAKE)
+	cd Simple_messenger; $(MAKE)
 
 clean:
-	cd Locker; make clean
-	cd Simple_messenger; make clean
+	cd Locker; $(MAKE) clean
+	cd Simple_messenger; $(MAKE) clean

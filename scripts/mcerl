@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # A stupid shell script for starting erlang with the right libraries;
 # there is a probably a better way, but...
