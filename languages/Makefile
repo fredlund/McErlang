@@ -1,4 +1,3 @@
-MAKE = make
 EMAKE = erl -make
 
 all:
