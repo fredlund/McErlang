@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # A script for generating a version number for McErlang
 
