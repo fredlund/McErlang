@@ -1356,24 +1356,35 @@ digOutExpr(Pid,Stack) ->
 printStackTrace(Indent,[]) ->
   "";
 printStackTrace(Indent,[{Module,Fun,ArityOrArguments}|Rest]) -> 
+  combine_strs
+    (indent(Indent)++printStackEntry(Module,Fun,ArityOrArguments,[]),
+     printStackTrace(Indent,Rest),
+     newline());
+printStackTrace(Indent,[{Module,Fun,ArityOrArguments,Location}|Rest]) -> 
+  combine_strs
+    (indent(Indent)++printStackEntry(Module,Fun,ArityOrArguments,Location),
+     printStackTrace(Indent,Rest),
+     newline()).
+
+printStackEntry(Module,Fun,ArityOrArguments,Location) ->
+  LocationStr =
+    case Location of
+      [{file,FileName},{line,LineNo}] ->
+	io_lib:format("file ~s, line ~p~n",[FileName,LineNo]);
+      Other ->
+	""
+    end,
   if
     is_list(ArityOrArguments) ->
-      combine_strs
-	(indent(Indent)++
-	 io_lib:format
-	 ("~s/~p(~s)",
-	  [get_modfun(Module,Fun),length(ArityOrArguments),
-	   print_arglist(ArityOrArguments)]),
-	 printStackTrace(Indent,Rest),
-	 newline());
+      io_lib:format
+	("~s/~p(~s) ~s",
+	 [get_modfun(Module,Fun),length(ArityOrArguments),
+	  print_arglist(ArityOrArguments),
+	  LocationStr]);
     is_integer(ArityOrArguments) ->
-      combine_strs
-	(indent(Indent)++
-	 io_lib:format
-	 ("~s/~p",
-	  [get_modfun(Module,Fun),ArityOrArguments]),
-	 printStackTrace(Indent,Rest),
-	 newline())
+      io_lib:format
+	("~s/~p ~s",
+	 [get_modfun(Module,Fun),ArityOrArguments,LocationStr])
   end.
 
 get_modfun(Mod,Fun) ->
