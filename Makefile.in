@@ -7,7 +7,6 @@ exec_prefix = @exec_prefix@
 libdir = @libdir@
 prefix = @prefix@
 
-MAKE = make
 EMAKE = erl -pa ../../behaviours/ebin -make
 
 all: tool examples
