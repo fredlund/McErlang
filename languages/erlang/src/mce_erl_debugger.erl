@@ -736,14 +736,14 @@ parse_eval_1(Pos,Bindings) ->
 eval_expr(Term,Bindings) ->
   erl_eval:expr
     (Term,Bindings,
-     {eval,{?MODULE,eval_local_func}},
-     {value,{?MODULE,eval_nonlocal_func}}).
+     {eval,fun eval_local_func/3},
+     {value,fun eval_nonlocal_func/2}).
 
 eval_exprs(Terms,Bindings) ->
   erl_eval:exprs
     (Terms,Bindings,
-     {eval,{?MODULE,eval_local_func}},
-     {value,{?MODULE,eval_nonlocal_func}}).
+     {eval,fun eval_local_func/3},
+     {value,fun eval_nonlocal_func/2}).
 
 %% @private
 eval_local_func(FunName, UnevalArgs, Bindings) ->
@@ -766,29 +766,26 @@ eval_arguments(UnevalArgs,Bindings) ->
 
 eval_command(FunName, Args) ->
   DebuggedState = get(debuggedState),
-  ModFun = {?MODULE, FunName},
   try
-    apply(ModFun, [DebuggedState|Args])
+    apply(?MODULE, FunName, [DebuggedState|Args])
   catch
     Term ->
       io:format
 	("~n~s throws ~p.~nBacktrace:~n  ~p~n",
-	 [app_str(ModFun,Args), Term, erlang:get_stacktrace()]),
+	 [app_str(FunName,Args), Term, erlang:get_stacktrace()]),
       throw(eval_error);
       exit:Reason ->
       io:format
 	("~n~s exits with ~p.~nBacktrace:~n  ~p~n",
-	 [app_str(ModFun,Args), Reason, erlang:get_stacktrace()]),
+	 [app_str(FunName,Args), Reason, erlang:get_stacktrace()]),
       throw(eval_error);
       error:Reason ->
       io:format
 	("~n~s fails with ~p.~nBacktrace:~n  ~p~n",
-	 [app_str(ModFun,Args), Reason, erlang:get_stacktrace()]),
+	 [app_str(FunName,Args), Reason, erlang:get_stacktrace()]),
       throw(eval_error)
   end.
 
-app_str({mce_erl_debugger,Command},Args) ->
-  app_str(Command,Args);
 app_str(ModFun,Args) ->
   io_lib:format
     ("~p(~s)",

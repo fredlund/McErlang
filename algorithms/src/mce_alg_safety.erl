@@ -108,12 +108,14 @@ run(Stack, Abstraction, Table, Conf) ->
       Mon = State#monState.monitor,
       Sys = State#monState.state,
       case mce_behav_monitorOps:stateChange(Sys, Mon, Stack) of
-	skip -> run(Rest, Abstraction, Table, Conf);
+	skip -> 
+	  {ok,{Table,Abstraction}};
 	{ok, NewMon} ->
 	  case addTransAndState
 	    (getPrevState(Stack), Actions,
-	     State, Abstraction, Table) of
+	     State, Depth, mce_conf:shortest(Conf), Abstraction, Table) of
 	    {exists, Abstraction1, Table1} ->
+	      ?LOG("already seen - skipping...~n",[]),
 	      {ok, {Table1, Abstraction1}};
 	    {new, AbsState, AbsActions, Abstraction1, Table1} ->
 	      Table2 =
@@ -128,6 +130,14 @@ run(Stack, Abstraction, Table, Conf) ->
 		   Rest),
 	      try transitions(Sys, NewMon, NewStack, Table2, Conf) of
 		Result ->
+		  ?LOG
+		    ("Transitions (~p) from~n~p~nto~n",
+		     [length(Result),Sys]),
+		  lists:foreach
+		    (fun ({Actions,State}) ->
+			 ?LOG("Actions ~p~n~p~n",[Actions,State])
+		     end, Result),
+		  ?LOG("~n",[]),
 		  check_transitions
 		    (Result, NewStack, Abstraction1, Table2, Conf)
 	      catch
@@ -137,9 +147,12 @@ run(Stack, Abstraction, Table, Conf) ->
 		    true ->
 		      case mce_conf:shortest(Conf) of
 			true ->
+			  ?LOG
+			     ("*** Continuing search with ~p states explored~n",
+			      [get(nStates)]),
 			  remember_shortest_path(Depth, Result),
 			  set_path_limit(Depth),
-			  run(Rest, Abstraction1, Table2, Conf);
+			  {ok, {Table2, Abstraction1}};
 			false ->
 			  mce_result:throw_result_exc
 			    (add_state_count
@@ -158,9 +171,12 @@ run(Stack, Abstraction, Table, Conf) ->
 	  Result = mce_result:mk_badmon(MonError,Stack,Table,Conf),
 	  case mce_conf:shortest(Conf) of
 	    true ->
+	      ?LOG
+		 ("*** Continuing search with ~p states explored~n",
+		  [get(nStates)]),
 	      remember_shortest_path(Depth, Result),
 	      set_path_limit(Depth),
-	      run(Rest, Abstraction, Table, Conf);
+	      {ok, {Table,Abstraction}};
 	    false ->
 	      mce_result:throw_result_exc(add_state_count(Result))
 	  end
@@ -199,7 +215,7 @@ stackDepth(Stack) ->
     false -> {Entry, _} = mce_behav_stackOps:pop(Stack), Entry#stackEntry.depth
   end.
 
-addTransAndState(PrevState, Actions, State, Abstraction, Table) ->
+addTransAndState(PrevState, Actions, State, Depth, Shortest, Abstraction, Table) ->
   {AbsActions, Abstraction1} =
     mce_behav_abstractionOps:abstract_actions(Actions, Abstraction),
   {AbsState, Abstraction2} =
@@ -216,9 +232,27 @@ addTransAndState(PrevState, Actions, State, Abstraction, Table) ->
   if NewElement ->
       report_generated_states(),
       Table2 = mce_behav_tableOps:add_state_alt(SavedState, Table1),
-      {new, AbsState, AbsActions, Abstraction2, Table2};
+      Table3 = 
+	if
+	  Shortest ->
+	    mce_behav_tableOps:add_data(AbsState,Depth,Table2);
+	  true ->
+	    Table2
+	end,
+      {new, AbsState, AbsActions, Abstraction2, Table3};
      not NewElement ->
-      {exists, Abstraction2, Table1}
+      if
+	Shortest ->
+	  OldDepth = mce_behav_tableOps:data(AbsState,Table1),
+	  if
+	    Depth < OldDepth ->
+	      Table2 = mce_behav_tableOps:add_state_alt(SavedState, Table1),
+	      Table3 = mce_behav_tableOps:add_data(AbsState,Depth,Table2),
+	      {new, AbsState, AbsActions, Abstraction2, Table3};
+	    true -> {exists, Abstraction2, Table1}
+	  end;
+	true -> {exists, Abstraction2, Table1}
+      end
   end.
 
 
@@ -333,7 +367,5 @@ check_conf_sanity(Conf) ->
     _ ->
       ok
   end.
-
-
     
   

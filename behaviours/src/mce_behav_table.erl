@@ -34,9 +34,11 @@
 -export([behaviour_info/1]).
 
 behaviour_info(callbacks) ->
-  [{init,1},{permit_state,2},{add_state,2},{add_trans,4},{info,1},
+  [{init,1},{permit_state,2},
+   {add_state,2},{add_trans,4},{add_data,2},
+   {info,1},
    {states_to_list,1},{transitions_to_list,1},
-   {states,1},{transitions,1},
+   {states,1},{transitions,1},{data,1},
    {set_initial_state,2},{get_initial_state,1}].
 
 

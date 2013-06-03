@@ -33,7 +33,7 @@
 
 -include("table.hrl").
 
--export([init/2,permit_state/2,permit_state_alt/2,add_state/2,add_state_alt/2,add_trans/4,info/1,states_to_list/1,transitions_to_list/1,set_initial_state/2,get_initial_state/1]).
+-export([init/2,permit_state/2,permit_state_alt/2,add_state/2,add_state_alt/2,add_trans/4,add_data/3,data/2,info/1,states_to_list/1,transitions_to_list/1,set_initial_state/2,get_initial_state/1]).
 -export([delete_table/1]).
 -export([states/1,transitions/1]).
 
@@ -60,6 +60,11 @@ add_trans(PrevState,State,Actions,Table) ->
     {contents=((Table#table.module):
 	       add_trans(PrevState,State,Actions,Table#table.contents))}.
 
+add_data(State,Data,Table) ->
+  Table#table
+    {contents=((Table#table.module):
+	       add_data(State,Data,Table#table.contents))}.
+
 info(Table) ->
   (Table#table.module):info(Table#table.contents).
 
@@ -85,3 +90,7 @@ states(Table) ->
 
 transitions(Table) ->
   (Table#table.module):transitions(Table#table.contents).
+
+data(State,Table) ->
+  (Table#table.module):data(State,Table#table.contents).
+  

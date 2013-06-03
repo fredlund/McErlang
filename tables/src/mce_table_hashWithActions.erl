@@ -31,7 +31,7 @@
 
 -module(mce_table_hashWithActions).
 
--export([init/1,permit_state/2,permit_state_alt/2,add_state/2,add_state_alt/2,add_trans/4,info/1,states_to_list/1,transitions_to_list/1,set_initial_state/2,get_initial_state/1]).
+-export([init/1,permit_state/2,permit_state_alt/2,add_state/2,add_state_alt/2,add_trans/4,info/1,states_to_list/1,transitions_to_list/1,set_initial_state/2,get_initial_state/1,add_data/3,data/2]).
 -export([delete_table/1]).
 -export([states/1,transitions/1]).
 
@@ -48,6 +48,18 @@ transitions({T,_}) ->
 	 Count+length(Transitions)
      end, 0, T).
 
+data(State,{T,_}) ->
+  case dict:find(State,T) of
+    error ->
+      io:format
+	("*** Error: ~p(data): Could not find state~n~p in keys~n~p~n",
+	 [?MODULE,State,dict:fetch_keys(T)]),
+      mce_result:throw_result_exc(mce_result:mk_internal_error(?MODULE));
+    {ok,{_,Data}} ->
+      Data
+  end.
+
+
 delete_table(_) -> ok. %% Data in process dict, will be overwritten...
 
 permit_state(State, {T, _InitState}) ->
@@ -56,17 +68,31 @@ permit_state(State, {T, _InitState}) ->
 permit_state_alt(State, {T, InitState}) ->
     {not isInTable(State, T), State}.
 
+add_data(State,NewData,{T,InitState}) ->
+  case dict:find(State,T) of
+    error ->
+      io:format
+	("*** Error: ~p(add_data): Could not find state~n~p in keys~n~p~n",
+	 [?MODULE,State,dict:fetch_keys(T)]),
+      mce_result:throw_result_exc(mce_result:mk_internal_error(?MODULE));
+    {ok,{Actions,Data}} ->
+      {dict:store
+       (State,
+	{Actions,NewData},T),
+       InitState}
+  end.
+
 add_trans(PrevState, State, Actions, {T,InitState}) ->
   case dict:find(PrevState,T) of
     error ->
       io:format
-	("*** Error: ~p: Could not find source state~n~p in keys~n~p~n",
+	("*** Error: ~p(add_trans): Could not find source state~n~p in keys~n~p~n",
 	 [?MODULE,PrevState,dict:fetch_keys(T)]),
       mce_result:throw_result_exc(mce_result:mk_internal_error(?MODULE));
-    {ok,OldActions} ->
+    {ok,{OldActions,Data}} ->
       {dict:store
        (PrevState,
-	addActions({Actions,State},OldActions),T),
+	{addActions({Actions,State},OldActions),Data},T),
        InitState}
   end.
 
@@ -75,7 +101,7 @@ add_state(State, {T,InitState}) ->
     {ok,_} -> io:format("~p: state~n~p~n already exists!~n",[?MODULE,State]);
     _ -> ok
   end,
-  {dict:store(State,[],T),InitState}.
+  {dict:store(State,{[],[]},T),InitState}.
 
 add_state_alt(State, T) ->
   add_state(State,T).
@@ -91,7 +117,7 @@ states_to_list({T,_}) ->
 
 transitions_to_list({T, _}) ->
     {ok,
-     dict:fold(fun (FromState, Actions, L) ->
+     dict:fold(fun (FromState, {Actions,_}, L) ->
 		       lists:map(fun ({Action, ToState}) ->
 					 {FromState, Action, ToState}
 				 end,
@@ -101,4 +127,5 @@ transitions_to_list({T, _}) ->
 set_initial_state(State,{T,_}) -> {T,State}.
 
 get_initial_state({_,State}) -> State.
+
 		    

@@ -46,7 +46,7 @@
 -include("macros.hrl").
 
 default_conf() ->
-  #mce_opts{output=true,is_simulation=true,sim_actions=true,small_pids=false}.
+  #mce_opts{output=true,sim_actions=true,small_pids=false}.
 
 init(Conf, S, _, Stack, Monitor, _, _, Scheduler) ->
   safety = mce_behav_monitorOps:monitorType(Monitor),
