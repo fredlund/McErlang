@@ -382,8 +382,8 @@ mce_whereis(Name) ->
   end.
 
 format(Format, Args) ->
-	?call_fun(mce_format(Format, Args),
-			  io:format(Format, Args)).
+  ?call_fun(mce_format(Format, Args),
+	    io:format(Format, Args)).
 mce_format(Format, Args) ->
   State = mce_erl_state:getState(),
   case output_enabled() of
@@ -392,8 +392,8 @@ mce_format(Format, Args) ->
   end.
 
 format(Format) ->
-	?call_fun(mce_format(Format),
-			  io:format(Format)).
+  ?call_fun(mce_format(Format),
+	    io:format(Format)).
 mce_format(Format) ->
   State = mce_erl_state:getState(),
   case output_enabled() of

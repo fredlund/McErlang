@@ -108,6 +108,7 @@ run(Stack, Scheduler, Conf) ->
 		    end
 		end
 	    end,
+	  ?LOG("Actions: ~p, System~n~p~n",[Actions,NewSys]),
 	  NewEntry =
 	    #stackEntry{state=#monState{state=NewSys, monitor=NewMon},
 			actions=Actions,

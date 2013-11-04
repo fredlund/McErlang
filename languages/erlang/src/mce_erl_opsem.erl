@@ -221,15 +221,15 @@ timeRestrict(Possibilities, Conf) ->
       ?LOG
 	 ("Will wait ~p milliseconds~n;first=~p~n",
 	  [WaitTime,Entry]),
-      timer:sleep(WaitTime),
+      case mce_conf:is_infinitely_fast(Conf) of
+	false ->
+	  timer:sleep(WaitTime);
+	true ->
+	  ok
+      end,
       [Entry];
      true ->
-      if
-	Now=:=infinity ->
-	  possibly_strip_timer_transitions(RestrictedPossibilities,Conf);
-	true  ->
-	  RestrictedPossibilities
-      end
+      possibly_strip_timer_transitions(RestrictedPossibilities,Conf)
   end.
 
 possibly_strip_timer_transitions(Transitions,Conf) ->

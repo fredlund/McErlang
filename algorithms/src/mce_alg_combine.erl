@@ -82,6 +82,10 @@ run(Mod1, Fun1, Args1, Alg2, Conf) ->
 	    init_algorithm(Alg2Conf, Conf, FinalState),
 	  %% A bug: we should probably use Alg2Conf instead of Conf2 here...
 	  mce_conf:prepare_run(Conf2),
+	  mce_conf:format
+	    (normal,
+	     "Switching to second verification algorithm~n",
+	     []),
 	  erlang:apply(Mod2, Fun2, Args2)
       end;
     false -> 

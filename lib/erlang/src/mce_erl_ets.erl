@@ -48,12 +48,19 @@ new(Name,[]) ->
   new(Name,[set,protected,{keypos,1}]);
 new(Name,Options) ->
   TableType = getTableType(Options),
-  _NamedTable = isNamedTable(Options),
+  NamedTable = isNamedTable(Options),
+  TableName =
+    if
+      NamedTable ->
+	Name;
+      true -> 
+	{Name,self()}
+    end,
   KeyPosElement = getKeyPosElement(Options),
   case TableType of
     Type when Type==ordered_set;Type==set ->
-      mcerlang:nput(Name,{ets,{KeyPosElement,[]}}),
-      Name;
+      mcerlang:nput(TableName,{ets,{KeyPosElement,[]}}),
+      TableName;
     _ ->
       io:format("error: ets table ~p not of type set; nyi~n",[TableType]),
       throw(ev_ets)
@@ -155,22 +162,23 @@ insert(TableId,Objects) ->
 insert_new(TableId, Objects) ->
     case mcerlang:nget(TableId) of
       {ets, {KeyPos, _Table}} ->
-	  case lists:foldl(fun (Object, Result) ->
-				   if not Result -> false;
-				      true ->
-					  Key = element(KeyPos, Object),
-					  case mce_erl_ets:lookup(TableId, Key) of
-					    [] -> true;
-					    _ -> false
-					  end
-				   end
-			   end, true,
-			   if is_list(Objects) -> Objects; true -> [Objects] end)
-	      of
+	  case lists:foldl
+	    (fun (Object, Result) ->
+		 if not Result -> false;
+		    true ->
+		     Key = element(KeyPos, Object),
+		     case mce_erl_ets:lookup(TableId, Key) of
+		       [] -> true;
+		       _ -> false
+		     end
+		 end
+	     end, true,
+	     if is_list(Objects) -> Objects; true -> [Objects] end)
+	  of
 	    false ->
-		false;
+	      false;
 	    true ->
-		insert(TableId, Objects)
+	      insert(TableId, Objects)
 	  end
     end.
 
@@ -352,8 +360,7 @@ add_to_bindings(A,O,Bindings) ->
     NewBindings -> {ok,NewBindings}
   end.
 
-add_to_bindings_1(A,O,[]) -> 
-  [{A,O}];
+add_to_bindings_1(A,O,[]) -> [{A,O}];
 add_to_bindings_1(A,O,Bindings=[{AB,OB}|Rest]) ->
   if
     A=:=AB ->
@@ -387,18 +394,18 @@ add_to_bindings_1(A,O,Bindings=[{AB,OB}|Rest]) ->
 select_delete(_TableId,[]) ->
 	0;
 select_delete(TableId,[{Pattern,[],[true]} | Patterns]) ->
-    ?LOG("~n*** In select_delete ***~n", []),
+  ?LOG("~n*** In select_delete ***~n", []),
     case mcerlang:nget(TableId) of
       {ets, {KeyPos, Table}} ->
-			NewTable =
-				lists:filter(fun (Elem) -> 
-									 not filter_match(Elem, Pattern) 
-							 end, Table),
-			?LOG("Old table ~p, New table ~p~n", [Table, NewTable]),
-			mcerlang:nput(TableId, {ets, {KeyPos, NewTable}}),
-			length(Table) - length(NewTable) +
-				select_delete(TableId,Patterns);
-		_ ->
-			io:format("***Warning: no ets table ~p exists~n", [TableId]),
-			0
+	NewTable =
+	  lists:filter(fun (Elem) -> 
+			   not filter_match(Elem, Pattern) 
+		       end, Table),
+	?LOG("Old table ~p, New table ~p~n", [Table, NewTable]),
+	mcerlang:nput(TableId, {ets, {KeyPos, NewTable}}),
+	length(Table) - length(NewTable) +
+	  select_delete(TableId,Patterns);
+      _ ->
+	io:format("***Warning: no ets table ~p exists~n", [TableId]),
+	0
     end.	
