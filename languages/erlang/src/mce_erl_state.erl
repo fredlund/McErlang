@@ -38,6 +38,7 @@
 	 getEther/1,setEther/2,
 	 getDict/1,setDict/2,
 
+	 getAtomic/1,setAtomic/2,
 	 getNode/1,setNode/2,
 	 getOtherNodes/1,setOtherNodes/2,
 	 getProcess/1,setProcess/2,
@@ -119,6 +120,11 @@ getNode(State) ->
 setNode(Node,State) ->
   Ex = getExecutable(State),
   setExecutable(Ex#executable{node=Node},State).
+
+getAtomic(State) ->
+  State#system.atomic.
+setAtomic(Atomic,State) ->
+  State#system{atomic=Atomic}.
 
 getOtherNodes(State) ->
   (getExecutable(State))#executable.otherNodes.

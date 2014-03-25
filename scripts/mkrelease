@@ -36,7 +36,8 @@ then
 	exit 0
 fi
 
-TRGDIR="$TRG/McErlang_version_$VER"
+#TRGDIR="$TRG/McErlang_version_$VER"
+TRGDIR="$TRG"
 echo "Will assemble release in $TRGDIR"
 
 if [ -d $TRGDIR ]
@@ -111,7 +112,7 @@ pushd $ABSSRCDIR/doc/edoc
 find . | grep -v '/\.svn' | cpio -dump $ABSTRGDIR2/doc/edoc
 popd
 
-popd
+#popd
 cp $ABSSRCDIR/bininst/README .
 cp $ABSSRCDIR/bininst/LICENCING .
 cp $ABSSRCDIR/bininst/NEWS .

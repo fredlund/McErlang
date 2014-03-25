@@ -664,8 +664,11 @@ transform_receive(C, Vars, CR) ->
       Name = cerl:call_name(C),
       case {cerl:is_c_atom(Module), cerl:is_c_atom(Name)} of
 	{true,true} ->
+	  ModuleAtom = cerl:atom_val(Module),
+	  NameAtom = cerl:atom_val(Name),
+	  Arity = cerl:call_arity(C),
 	  case mce_erl_sef_analysis:call_has_snd_for_sure
-	    ({cerl:atom_val(Module),cerl:atom_val(Name),cerl:call_arity(C)},
+	    ({ModuleAtom,NameAtom,Arity},
 	     CR#cRrec.compileRec) of
 	    false -> {C, []};
 	    true -> 

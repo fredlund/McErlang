@@ -167,12 +167,39 @@ allPossibilities(State, Conf) ->
     AllRunPossibilities,
   TimeRestrictedPossibilities =
     timeRestrict(AllPossibilities, Conf),
-  ?LOG("all transitions=~n~p~n",[TimeRestrictedPossibilities]),
+  RemainingPossibilities =
+    atomicRestrict(TimeRestrictedPossibilities, State#state.atomic),
+  ?LOG("all transitions=~n~p~n",[RemainingPossibilities]),
   case mce_conf:random(Conf) of
     true ->
-      randomise(TimeRestrictedPossibilities);
+      randomise(RemainingPossibilities);
     _ ->
-      TimeRestrictedPossibilities
+      RemainingPossibilities
+  end.
+
+atomicRestrict(Possibilities, void) ->
+  Possibilities;
+atomicRestrict(Possibilities,Pid) ->
+  Moves =
+    lists:foldl
+      (fun (Move,{AM,OM}) ->
+	   case Move of
+	     {exec,Exec,State} ->
+	       if
+		 (Exec#executable.process)#process.pid==Pid ->
+		   {[Move|AM],OM};
+		 true ->
+		   {AM,[Move|OM]}
+	       end;
+	     _ ->
+	       {AM,[Move|OM]}
+	   end
+       end, {[],[]}, Possibilities),
+  case Moves of
+    {AtomicMoves=[_|_],_} ->
+      AtomicMoves;
+    {[],OtherMoves} ->
+      OtherMoves
   end.
 
 timeRestrict(Possibilities, Conf) ->
@@ -388,12 +415,20 @@ addTimeStamps({M1,S1,Mic1},{M2,S2,Mic2}) ->
 
 doStep({commMove, CommSpec, State}, Conf) ->
   initActions(),
-  Result = mce_erl_node:doDispatchSignal(CommSpec, State),
+  NewState = State#state{atomic=void},
+  Result = mce_erl_node:doDispatchSignal(CommSpec, NewState),
   {getActions(), Result};
 doStep({exec, Exec, SavedState}, Conf) ->
   initActions(),
+  NewState =
+    if
+      (Exec#executable.process)#process.pid==SavedState#state.atomic ->
+	SavedState;
+      true ->
+	SavedState#state{atomic=void}
+    end,
   try
-    Result = doStep1(Exec, SavedState, Conf),
+    Result = doStep1(Exec, NewState, Conf),
     ?LOG("doStep: result=~p~n", [Result]),
     {getActions(), Result}
   catch
@@ -627,21 +662,6 @@ handleTerminated() ->
   State = mce_erl_state:getState(),
   mce_erl_sysOS:mkStateFromCurrentExecutable
     (mce_erl_sys:inform({'EXIT', crashed}, State)).
-
-isTagged({?TRYTAG,_}) ->
-  true;
-isTagged({?LETTAG,_}) ->
-  true;
-isTagged({?CHOICETAG,_}) ->
-  true;
-isTagged({?SENDTAG,_}) ->
-  true;
-isTagged({?EXITINGTAG,_}) ->
-  true;
-isTagged({?RECVTAG,_}) ->
-  true;
-isTagged(_) ->
-  false.
 
 doReceive(Exec, SavedState, Conf) ->
   P = Exec#executable.process,

@@ -62,7 +62,9 @@
 	 gs_start/0,gs_start/1,gs_config/2,gs_create/3,
 	 
 	 bringNodeUp/1, bringNodeDown/1,
-	 setCurrentApplication/3]).
+	 setCurrentApplication/3,
+
+	 begin_atomic/0, end_atomic/0]).
 
 %%-define(debug,true).
 -include("../../../src/include/macros.hrl").
@@ -1196,5 +1198,20 @@ read_timer(Timer) ->
 mce_read_timer(Timer) ->
   20.
 					   
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+begin_atomic() ->
+  State = mce_erl_state:getState(),
+  Pid = mce_erl_sysOS:self(State),
+  io:format("begin_atomic for ~p~n",[Pid]),
+  mce_erl_state:setState(mce_erl_state:setAtomic(Pid,State)).
+
+end_atomic() ->
+  State = mce_erl_state:getState(),
+  io:format("end_atomic; was ~p~n",[State#system.atomic]),
+  mce_erl_state:setState(mce_erl_state:setAtomic(void,State)).
+
+
+  
   
 
