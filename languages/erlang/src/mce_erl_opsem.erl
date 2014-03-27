@@ -167,14 +167,36 @@ allPossibilities(State, Conf) ->
     AllRunPossibilities,
   TimeRestrictedPossibilities =
     timeRestrict(AllPossibilities, Conf),
-  RemainingPossibilities =
+  AtomicPossibilities =
     atomicRestrict(TimeRestrictedPossibilities, State#state.atomic),
+  RemainingPossibilities = 
+    case mce_conf:sends_are_sefs(Conf) of
+      true ->
+	case find_nonsend(AtomicPossibilities) of
+	  [First|_] -> [First];
+	  [] -> AtomicPossibilities
+	end;
+      false -> AtomicPossibilities
+    end,
   ?LOG("all transitions=~n~p~n",[RemainingPossibilities]),
   case mce_conf:random(Conf) of
     true ->
       randomise(RemainingPossibilities);
     _ ->
       RemainingPossibilities
+  end.
+
+find_nonsend([]) -> [];
+find_nonsend([First|Rest]) -> 
+  case First of
+    {exec,Exec,_State} ->
+      case (Exec#executable.process)#process.status of
+	runnable -> [First];
+	receivable -> [First];
+	dead -> [First];
+	_ -> find_nonsend(Rest)
+      end;
+    _ -> find_nonsend(Rest)
   end.
 
 atomicRestrict(Possibilities, void) ->

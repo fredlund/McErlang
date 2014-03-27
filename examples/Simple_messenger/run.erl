@@ -1,7 +1,7 @@
 -module(run).
 -language(erlang).
 
--export([debug/0,safety/0,logon/0]).
+-export([debug/0,debug_sends/0,safety/0,logon/0]).
 -export([message_received1/0,message_received1_combine/0]).
 -export([message_received2/0,message_received2_combine/0]).
 
@@ -23,6 +23,14 @@ debug() ->
      {program={scenario,start,[[[{logon,clara},{message,fred,"hola"},logoff],
 				[{logon,fred},logoff]]]},
       algorithm={mce_alg_debugger,void}}).
+
+debug_sends() ->
+  mce:start
+    (#mce_opts
+     {program={scenario,start,[[[{logon,clara},{message,fred,"hola"},logoff],
+				[{logon,fred},logoff]]]},
+      algorithm={mce_alg_debugger,void},
+      sends_are_sefs=true}).
 
 safety() ->
   mce:start
