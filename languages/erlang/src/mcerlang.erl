@@ -864,7 +864,7 @@ nerase(Key) ->
 
 gerase(Key) ->
   State = mce_erl_state:getState(),
-  {Value, NewDict} = mce_erl_sysOS:nerase(Key, State),
+  {Value, NewDict} = mce_erl_sysOS:gerase(Key, State),
   mce_erl_state:setState(mce_erl_state:setDict(NewDict, State)),
   mce_erl_actions:record
     (mce_erl_actions:mk_api_call
