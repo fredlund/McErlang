@@ -1,0 +1,9 @@
+*.beam
+Makefile
+config.log
+config.status
+app/doc/html
+languages/erlang/src/include/include
+languages/erlang/src/pre/ebin/
+src/include/erlang
+src/mce_version.erl

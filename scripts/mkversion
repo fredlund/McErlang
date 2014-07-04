@@ -18,11 +18,5 @@ Version="McErlang $Version [revision $Revision++ compiled on ${Date}]"
 echo "-module(mce_version)." > src/mce_version.erl
 echo "-export([version/0])." >> src/mce_version.erl
 echo >> src/mce_version.erl
-echo "version() -> " >> src/mce_version.erl
-echo -n "  \"">> src/mce_version.erl
-echo -n $Version >> src/mce_version.erl
-echo "\".">> src/mce_version.erl
+echo "version() -> \"$Version\"." >> src/mce_version.erl
 (cd src; erlc -o ../ebin mce_version.erl)
-
-
-
