@@ -32,12 +32,14 @@ tool:
 examples:
 	cd examples; $(MAKE)	
 
+edocs:
+	scripts/gen_edoc.sh
+
 docs:
 	cd doc/tutorial; make
 	cd doc/userManual; make
-	scripts/gen_edoc.sh
 
-release: tool docs
+release: tool edocs
 	@ scripts/mkrelease "." release $(MCE_VERSION)
 
 release_nobuild:
