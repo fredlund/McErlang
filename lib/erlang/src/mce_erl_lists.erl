@@ -30,7 +30,7 @@
 	 sort/1, merge/1, merge/2, rmerge/2, merge3/3, rmerge3/3,
 	 usort/1, umerge/1, umerge3/3, umerge/2, rumerge3/3, rumerge/2,
 	 concat/1, flatten/1, flatten/2, flat_length/1, flatlength/1,
-	 keydelete/3, keyreplace/4, keytake/3, keystore/4,
+	 keydelete/3, keyreplace/4, keytake/3, keystore/4, keyfind/3,
 	 keysort/2, keymerge/3, rkeymerge/3, rukeymerge/3, 
 	 ukeysort/2, ukeymerge/3, keymap/3]).
 
@@ -398,6 +398,13 @@ keysearch3(Key, N, [H|_]) when element(N, H) == Key ->
 keysearch3(Key, N, [_|T]) ->
     keysearch3(Key, N, T);
 keysearch3(_Key, _N, []) -> false.
+
+keyfind(Key, N, [H|_]) when element(N,H) == Key ->
+  H;
+keyfind(Key, N, [_|T]) ->
+  keyfind(Key, N, T);
+keyfind(_Key, _N, []) ->
+  false.
 
 keydelete(K,N,L) when is_integer(N), N > 0 ->
     keydelete3(K,N,L).
