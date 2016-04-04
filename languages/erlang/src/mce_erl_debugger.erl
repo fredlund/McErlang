@@ -371,19 +371,18 @@ readcmd(Stack) ->
   end.
 
 get_transitions(Stack) ->
-  {SaveConf,SavedConf} =
-    case at_top_of_stack(Stack) of
-      true ->
-	case mce_conf:external_io_possible() of
-	  true ->
-	    {true,
-	     mce_conf:put_conf
-	     ((mce_conf:get_conf())#mce_opts{sim_external_world=false})};
-	  false ->
-	    {false,void}
-	end;
-      false -> {false,void}
-    end,
+  case at_top_of_stack(Stack) of
+    true ->
+      case mce_conf:external_io_possible() of
+	true ->
+	  mce_conf:put_conf
+	    ((mce_conf:get_conf())#mce_opts{sim_external_world=false,random=false});
+	false ->
+	  mce_conf:put_conf
+	    ((mce_conf:get_conf())#mce_opts{random=false})
+      end;
+    false -> ok
+  end,
   System =
     get_sys(get_stack_at_position(Stack)),
   Result =
@@ -393,7 +392,6 @@ get_transitions(Stack) ->
       Transes ->
 	{Transes, Stack, false}
     end,
-  if SaveConf -> mce_conf:put_conf(SavedConf); true -> ok end,
   Result.
 
 updStack({unchanged, _, _}, Stack) ->
