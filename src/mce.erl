@@ -603,12 +603,18 @@ hello(Algorithm,Program,Monitor) ->
 	   [Monitor]),
 	throw({bad_monitor,Monitor})
     end,
+  OptString =
+    if 
+      AOpts==void -> 
+	" ";
+      true -> 
+	io_lib:format(" with options ~n~s~n",[mce_erl_pretty:pretty(AOpts)])
+    end,
   mce_conf:format
     (normal,
-     "Starting algorithm ~p with options~n~s~non program~n~s~n"++
+     "Starting algorithm ~p~son program~n~s~n"++
      "with monitor ~p(~p)~n~n",
-     [Alg,mce_erl_pretty:pretty(AOpts),
-      printProgram(Program),Mon,MOpts]).
+     [Alg,OptString,printProgram(Program),Mon,MOpts]).
 
 checkProgram(Conf) ->
   checkProgram(Conf,Conf#mce_opts.program).

@@ -422,14 +422,25 @@ gen_error_stack(State, Monitor, Stack) ->
      Stack).
 
 check_conf_sanity(Conf) ->
-  %% Sim_external_world cannot be true
-  case Conf#mce_opts.sim_external_world of
-    true ->
+  if
+    Conf#mce_opts.shortest ->
+      TableImplementation = 
+	case Conf#mce_opts.table of {T,_} -> T; Other -> Other end,
+      if
+	TableImplementation==mce_table_hashWithActions ->
+	  ok;
+	true ->
+	  io:format
+	    ("Error: the shortest option needs the hashWithActions "
+	     ++"table implementation.~n"),
+	  throw(conf_error)
+      end;
+    
+    Conf#mce_opts.sim_external_world ->
       io:format("Error: sim_external_world=true is not compatible with "++
 		"the selected algorithm~n",[]),
       throw(conf_error);
-    _ ->
-      ok
+    true -> ok
   end.
 
 get_random_keyvalue(T) ->
