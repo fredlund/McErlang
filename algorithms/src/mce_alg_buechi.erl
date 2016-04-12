@@ -49,7 +49,7 @@
 -include("mce_opts.hrl").
 
 
-%%%-define(debug,true).
+%%-define(debug,true).
 -include("macros.hrl").
 
 
@@ -223,7 +223,7 @@ run(Stack, Abstraction, Table, LookingForAcceptingState, Enabled, Conf) ->
     MonError ->
       ?LOG(("~n~nMonitor returns error ~p at state~n" ++
 	    "~p~nand monitor state  ~p~n"),
-	   [Other, Sys, Mon]),
+	   [MonError, Sys, Mon]),
       mce_result:throw_result_exc
 	(mce_result:mk_badmon(MonError,OldStack,Table1,Conf))
   end.
@@ -237,8 +237,7 @@ check_counterExample(Magic,LookingForAcceptingState,AbsState,Enabled,
   if CounterExampleFound ->
       %% We have found a counterexample, report it
       ?LOG("Found a counterexample!~n", []),
-      ?LOG("Sys=~p~n", [Sys]),
-      ?LOG("State: ~p~n", [State]),
+      ?LOG("State: ~s~n", [mce_erl_pretty:pretty(State)]),
       mce_result:throw_result_exc
 	(mce_result:mk_badloop(State,strip_magic(Stack),Conf,Table));
      true ->
@@ -323,6 +322,7 @@ all_enabled(Transitions) ->
      end,sets:new(),Transitions).
 
 is_active(runnable) -> true;
+is_active(sendable) -> true;
 is_active({timer,_}) -> true;
 is_active(receivable) -> true;
 is_active(_) -> false.
