@@ -48,7 +48,7 @@
 	 explored_states=void,
 	 private=void}).
 
--opaque mce_result() :: #mce_result{}.
+-type mce_result() :: #mce_result{}.
 -export_type([mce_result/0]).
 
 -include("mce_opts.hrl").
