@@ -60,7 +60,7 @@
 
 -type program() :: {Mod :: atom(), Fun :: atom(), Args :: [term()]} | (Function :: function()).
 -type random_seed() :: {integer(),integer(),integer()}.
--type mce_result() :: record().
+% -type mce_result() :: 'mce_result'.record().
 
 -behavior(application).
 
@@ -450,7 +450,7 @@ debug(Program) ->
 %% @doc Retreives the result of the last model checker run.
 %%
 %% @spec get_res() -> mce_result() | 'undefined'
--spec get_res() -> mce_result() | 'undefined'.
+-spec get_res() -> mce_result:mce_result() | 'undefined'.
 get_res() ->
 	gen_server:call(mcerlang,last_res,infinity).
 
